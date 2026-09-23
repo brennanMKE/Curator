@@ -23,19 +23,32 @@ final class AppModel {
     let search = SearchStore()
     let details = ItemDetailStore()
 
+    /// How Movies and TV Shows are ordered; one choice for both, remembered across launches.
+    var librarySort: LibrarySort {
+        didSet {
+            guard librarySort != oldValue else { return }
+            defaults.set(librarySort.storageValue, forKey: Self.librarySortKey)
+            browseStores.values.forEach { $0.setSort(librarySort) }
+        }
+    }
+
     static let pollInterval: Duration = .seconds(60)
+    private static let librarySortKey = "librarySort"
     /// Settings save on every keystroke; reconnect once typing settles.
     static let settingsDebounce: Duration = .milliseconds(600)
 
     @ObservationIgnored private var browseStores: [String: BrowseStore] = [:]
+    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var connectTask: Task<Void, Never>?
     @ObservationIgnored private var pollTask: Task<Void, Never>?
     @ObservationIgnored private var tmdbTask: Task<Void, Never>?
     @ObservationIgnored private var connectedServerID: String?
 
-    init(settings: SettingsStore = SettingsStore(), recent: RecentStore = RecentStore()) {
+    init(settings: SettingsStore = SettingsStore(), recent: RecentStore = RecentStore(), defaults: UserDefaults = .standard) {
         self.settings = settings
         self.recent = recent
+        self.defaults = defaults
+        librarySort = defaults.string(forKey: Self.librarySortKey).flatMap(LibrarySort.init(storageValue:)) ?? .default
 
         let context: () -> PlexContext? = { [weak self] in self?.plexContext }
         recent.context = context
@@ -93,7 +106,7 @@ final class AppModel {
     /// The store for one library, kept across visits so it isn't reloaded each time.
     func browseStore(for section: PlexSection) -> BrowseStore {
         if let store = browseStores[section.key] { return store }
-        let store = BrowseStore(section: section)
+        let store = BrowseStore(section: section, sort: librarySort)
         store.context = { [weak self] in self?.plexContext }
         browseStores[section.key] = store
         return store

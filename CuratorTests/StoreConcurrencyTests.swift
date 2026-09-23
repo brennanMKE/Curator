@@ -83,6 +83,23 @@ struct StoreConcurrencyTests {
         #expect(!store.isLoading)
     }
 
+    @Test func changingTheSortReloadsInThatOrder() async {
+        StubURLProtocol.route { request in
+            Stub.query(request, "sort") == "originallyAvailableAt:desc"
+                ? .init(json: Stub.items([("2", "Newer"), ("1", "Older")]))
+                : .init(json: Stub.items([("1", "Older"), ("2", "Newer")]))
+        }
+        let store = BrowseStore(section: Stub.movies)
+        store.context = { Stub.context() }
+        store.loadIfNeeded()
+        #expect(await eventually { store.hasLoaded })
+        #expect(store.items.map(\.title) == ["Older", "Newer"])
+
+        store.setSort(LibrarySort(field: .releaseDate, ascending: false))
+        #expect(await eventually { store.items.first?.title == "Newer" })
+        #expect(StubURLProtocol.requests.compactMap { Stub.query(URLRequest(url: $0), "sort") }.last == "originallyAvailableAt:desc")
+    }
+
     @Test func detailsLandOnTheirOwnItem() async {
         StubURLProtocol.route { request in
             let key = request.url?.lastPathComponent ?? ""

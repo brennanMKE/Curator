@@ -65,7 +65,7 @@ final class RecentStore {
             for section in sections {
                 group.addTask {
                     do {
-                        return .success(try await client.items(in: section, sort: .newest, episodes: section.kind == .show, page: page))
+                        return .success(try await client.items(in: section, sort: .newestAdded, episodes: section.kind == .show, page: page))
                     } catch {
                         return .failure(error as? PlexError ?? .badResponse)
                     }

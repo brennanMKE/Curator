@@ -13,11 +13,6 @@ nonisolated struct PlexClient: Sendable {
         var size: Int
     }
 
-    enum Sort: String, Sendable {
-        case newest = "addedAt:desc"
-        case title = "titleSort:asc"
-    }
-
     func serverInfo() async throws -> PlexServerInfo {
         try await get("/", as: PlexServerInfo.self)
     }
@@ -34,8 +29,8 @@ nonisolated struct PlexClient: Sendable {
 
     /// A section's items in the given order. For TV, `episodes` lists episodes rather than
     /// shows, which is what "recently added" means there: a new episode doesn't re-date its show.
-    func items(in section: PlexSection, sort: Sort, episodes: Bool = false, page: Page) async throws -> PlexItemList {
-        var query = [URLQueryItem(name: "sort", value: sort.rawValue), URLQueryItem(name: "includeGuids", value: "1")]
+    func items(in section: PlexSection, sort: LibrarySort, episodes: Bool = false, page: Page) async throws -> PlexItemList {
+        var query = [URLQueryItem(name: "sort", value: sort.plexValue), URLQueryItem(name: "includeGuids", value: "1")]
         if episodes { query.append(URLQueryItem(name: "type", value: "4")) }
         return try await get("/library/sections/\(section.key)/all", as: PlexItemList.self, query: query, page: page)
     }

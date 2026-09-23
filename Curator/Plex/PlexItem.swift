@@ -13,6 +13,8 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
     let audienceRating: Double?
     let duration: Int?
     let addedAt: Date?
+    /// "YYYY-MM-DD" from Plex.
+    let originallyAvailableAt: String?
     let thumb: String?
     let art: String?
     let librarySectionID: Int?
@@ -69,9 +71,13 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
 
     var filePath: String? { media.first?.parts.first?.file }
 
+    var releaseDate: Date? {
+        originallyAvailableAt.flatMap { try? Date($0, strategy: .iso8601.year().month().day()) }
+    }
+
     enum CodingKeys: String, CodingKey {
         case ratingKey, type, title, year, summary, tagline, contentRating, audienceRating, duration
-        case addedAt, thumb, art, librarySectionID
+        case addedAt, originallyAvailableAt, thumb, art, librarySectionID
         case grandparentTitle, grandparentThumb, grandparentArt, parentIndex, index
         case reason, reasonTitle
         case guids = "Guid"
@@ -93,6 +99,7 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
         audienceRating = try c.decodeIfPresent(Double.self, forKey: .audienceRating)
         duration = try c.decodeIfPresent(Int.self, forKey: .duration)
         addedAt = try c.decodeIfPresent(Double.self, forKey: .addedAt).map(Date.init(timeIntervalSince1970:))
+        originallyAvailableAt = try c.decodeIfPresent(String.self, forKey: .originallyAvailableAt)
         thumb = try c.decodeIfPresent(String.self, forKey: .thumb)
         art = try c.decodeIfPresent(String.self, forKey: .art)
         librarySectionID = try c.decodeIfPresent(Int.self, forKey: .librarySectionID)

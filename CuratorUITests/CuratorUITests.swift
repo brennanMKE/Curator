@@ -124,6 +124,28 @@ final class CuratorUITests: XCTestCase {
                       "TMDB didn't accept the key; artwork would fall back to Plex")
     }
 
+    /// Sorting Movies by release date really reorders the posters, both ways.
+    @MainActor
+    func testSortingByReleaseDate() throws {
+        let app = try launchWithPlex()
+        XCTAssertTrue(app.buttons.matching(identifier: "poster").firstMatch.waitForExistence(timeout: 30))
+        let movies = app.outlines.staticTexts["Movies"]
+        XCTAssertTrue(movies.waitForExistence(timeout: 10))
+        movies.click()
+
+        chooseSort(app, "Release Date")
+        chooseSort(app, "Oldest First")
+        let oldestFirst = try years(ofFirst: 4, in: app)
+        XCTAssertEqual(oldestFirst, oldestFirst.sorted(), "not oldest first: \(oldestFirst)")
+
+        chooseSort(app, "Newest First")
+        let newestFirst = try years(ofFirst: 4, in: app)
+        XCTAssertEqual(newestFirst, newestFirst.sorted(by: >), "not newest first: \(newestFirst)")
+        XCTAssertNotEqual(oldestFirst, newestFirst)
+
+        chooseSort(app, "Title")   // leave the remembered sort as it was
+    }
+
     /// Reproduces the 0.0.1 crash: resizing the window while the poster grid and inspector are
     /// showing threw `_postWindowNeedsUpdateConstraints` inside AppKit's layout pass.
     @MainActor
@@ -159,6 +181,28 @@ final class CuratorUITests: XCTestCase {
     }
 
     // MARK: Helpers
+
+    @MainActor
+    private func chooseSort(_ app: XCUIApplication, _ item: String) {
+        let menu = app.toolbars.menuButtons["Sort"].firstMatch
+        XCTAssertTrue(menu.waitForExistence(timeout: 10), "no Sort menu")
+        menu.click()
+        let choice = app.menuItems[item]
+        XCTAssertTrue(choice.waitForExistence(timeout: 5), "no \(item) in the Sort menu")
+        choice.click()
+    }
+
+    /// The release years shown under the first posters, read from their subtitles.
+    @MainActor
+    private func years(ofFirst count: Int, in app: XCUIApplication) throws -> [Int] {
+        let posters = app.buttons.matching(identifier: "poster")
+        XCTAssertTrue(posters.firstMatch.waitForExistence(timeout: 20))
+        let pattern = try Regex(#"\b(1[89]|20)\d{2}\b"#)
+        return (0..<min(count, posters.count)).compactMap { index in
+            let label = posters.element(boundBy: index).label
+            return label.matches(of: pattern).last.flatMap { Int(label[$0.range]) }
+        }
+    }
 
     /// Clicks Curator's status item and returns the window it opens.
     @MainActor

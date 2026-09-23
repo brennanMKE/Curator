@@ -43,6 +43,11 @@ nonisolated enum Format {
         }
     }
 
+    /// Plex release dates are calendar days, so format them in UTC to avoid showing the day before.
+    static func releaseDate(_ date: Date) -> String {
+        date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted, timeZone: .gmt))
+    }
+
     static func relative(_ date: Date, to now: Date = .now) -> String {
         if now.timeIntervalSince(date) < 60 { return "just now" }
         let formatter = RelativeDateTimeFormatter()

@@ -7,6 +7,7 @@ final class BrowseStore {
     static let pageSize = 120
 
     let section: PlexSection
+    private(set) var sort: LibrarySort
     private(set) var items: [PlexItem] = []
     private(set) var totalSize: Int?
     private(set) var isLoading = false
@@ -19,8 +20,16 @@ final class BrowseStore {
     /// response can't leave the store stuck or overwrite newer results.
     @ObservationIgnored private var generation = 0
 
-    init(section: PlexSection) {
+    init(section: PlexSection, sort: LibrarySort = .default) {
         self.section = section
+        self.sort = sort
+    }
+
+    /// Changing the order reloads from the first page, since Plex does the sorting.
+    func setSort(_ newSort: LibrarySort) {
+        guard newSort != sort else { return }
+        sort = newSort
+        if hasLoaded || task != nil { reload() }
     }
 
     var hasMore: Bool { totalSize.map { items.count < $0 } ?? true }
@@ -45,11 +54,12 @@ final class BrowseStore {
         guard let client = context()?.client else { return }
         let current = generation
         let section = section
+        let sort = sort
         isLoading = true
         task = Task { [weak self] in
             let result: Result<PlexItemList, PlexError>
             do {
-                result = .success(try await client.items(in: section, sort: .title, page: .init(start: offset, size: Self.pageSize)))
+                result = .success(try await client.items(in: section, sort: sort, page: .init(start: offset, size: Self.pageSize)))
             } catch {
                 result = .failure(error as? PlexError ?? .badResponse)
             }
