@@ -6,5 +6,15 @@
     <description>Updates for Curator, a Mac app for your Plex library.</description>
     <language>en</language>
     <!-- ITEMS: scripts/update-website.sh adds each release here, newest first. Don't edit by hand. -->
+    <item>
+      <title>0.0.1</title>
+      <pubDate>Wed, 23 Sep 2026 21:27:27 +0000</pubDate>
+      <sparkle:version>202609232126</sparkle:version>
+      <sparkle:shortVersionString>0.0.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://curator.sstools.co/changelog.html#v0-0-1</sparkle:releaseNotesLink>
+      <description><![CDATA[<p>The first release.</p><ul><li><b>Recently Added</b> across your Plex libraries, grouped by day. It refreshes every minute, marks anything imported in the last 3 hours as NEW, and shows a banner when a title arrives.</li><li><b>Search</b> by title, actor or director. Matches on cast or crew say why they matched.</li><li><b>Browse</b> Movies and TV Shows.</li><li><b>Details</b> for the selected title: artwork, summary, cast, when it was added, the video format, and the file path and size on the server, with <b>Open in Plex</b>.</li><li><b>Menu bar</b> list of the last 5 imports.</li><li><b>Grid or list</b> view, arrow keys to move, Return to open in Plex, Space for a preview.</li><li><b>Settings</b> with step-by-step help for finding your Plex token and an optional TMDB key. Artwork comes from TMDB when you add a key, and from Plex otherwise.</li></ul>]]></description>
+      <enclosure url="https://curator.sstools.co/downloads/Curator-0.0.1.dmg" length="3960344" type="application/octet-stream" sparkle:edSignature="henvBz1wrJktAIYu0yD86gMzv5TJZHUFfeFfofJ3g7AdL0Ujgp+HJ5wKjT+Sd3AW0YyEzdKHeMHzIKKx3BLqDw=="/>
+    </item>
   </channel>
 </rss>
