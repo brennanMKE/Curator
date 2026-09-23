@@ -1,0 +1,230 @@
+/* Curator — a cinema lobby: a brass-and-bulb marquee, museum wall labels, Plex gold. */
+
+:root {
+    --lobby: #1e1d1b;      /* the wall */
+    --board: #2a2825;      /* marquee letterboard */
+    --brass: #e5a00d;      /* Plex gold */
+    --bulb: #ffd37a;       /* lit letters */
+    --paper: #f2ede3;      /* wall labels */
+    --ink: #26221c;        /* text on paper */
+    --wall-text: #d9d3c7;  /* text on the wall */
+    --wall-muted: #a39c8f;
+
+    --display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+    --serif: "Source Serif 4", Georgia, serif;
+
+    --measure: 36rem;
+    --gutter: clamp(1.25rem, 4vw, 3rem);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { background: var(--lobby); }
+
+body {
+    margin: 0;
+    color: var(--wall-text);
+    background: var(--lobby);
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--bulb); text-underline-offset: 0.18em; }
+a:hover { color: var(--brass); }
+:focus-visible { outline: 3px solid var(--bulb); outline-offset: 3px; border-radius: 2px; }
+
+.wrap { max-width: 68rem; margin: 0 auto; padding: 0 var(--gutter); }
+
+/* --- Top bar --------------------------------------------------------------- */
+
+.top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: 1.5rem;
+}
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: 0.02em;
+    color: var(--paper);
+    text-decoration: none;
+}
+.brand img { width: 36px; height: 36px; }
+.top nav a { margin-left: 1.5rem; color: var(--wall-text); text-decoration: none; }
+.top nav a:hover { color: var(--bulb); }
+
+/* --- Hero: the marquee ------------------------------------------------------ */
+
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: clamp(1.5rem, 4vw, 4rem);
+    padding-block: clamp(2rem, 6vw, 5rem) clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.marquee {
+    position: relative;
+    background: var(--board);
+    border: 6px solid var(--brass);
+    border-radius: 14px;
+    padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 3vw, 2.25rem);
+    box-shadow: 0 0 0 2px #120f0a inset, 0 30px 80px -30px rgba(229, 160, 13, 0.35);
+}
+/* the bulbs around the frame */
+.marquee::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle, var(--bulb) 0 3px, transparent 3.5px) 0 0 / 28px 28px repeat-x,
+        radial-gradient(circle, var(--bulb) 0 3px, transparent 3.5px) 0 100% / 28px 28px repeat-x;
+    background-position: 14px -11px, 14px calc(100% + 11px);
+    pointer-events: none;
+}
+
+.board-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.07em;
+    font-family: var(--display);
+    font-weight: 800;
+    line-height: 1;
+    margin: 0.35em 0;
+}
+.board-row .tile {
+    display: inline-grid;
+    place-items: center;
+    min-width: 0.78em;
+    padding: 0.08em 0.06em 0.02em;
+    background: #f7f1e3;
+    color: #1b1813;
+    border-radius: 0.06em;
+    box-shadow: 0 0.04em 0 #b8ae98;
+    transform-origin: 50% 0;
+}
+.board-row .tile.space { min-width: 0.3em; background: none; box-shadow: none; }
+.board-row--small { font-size: clamp(1rem, 2.2vw, 1.5rem); }
+.board-row--big   { font-size: clamp(1.9rem, 6.4vw, 4.8rem); }
+.board-row--small .tile { background: var(--brass); color: #1b1813; box-shadow: 0 0.04em 0 #9c6c06; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .board-row .tile {
+        animation: flip 520ms cubic-bezier(.2, .8, .3, 1) both;
+        animation-delay: calc(var(--i) * 45ms + 150ms);
+    }
+    @keyframes flip {
+        from { transform: rotateX(-95deg); opacity: 0; }
+        to   { transform: none; opacity: 1; }
+    }
+}
+
+.hero-robot { width: clamp(120px, 16vw, 210px); height: auto; margin-bottom: -0.5rem; }
+
+.lede { grid-column: 1 / -1; max-width: var(--measure); }
+.lede h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    line-height: 0.98;
+    letter-spacing: 0.01em;
+    color: var(--paper);
+    margin: 0 0 1rem;
+}
+.lede p { margin: 0 0 1.75rem; }
+
+.download {
+    display: inline-block;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.45rem;
+    letter-spacing: 0.02em;
+    padding: 0.55rem 1.4rem 0.45rem;
+    background: var(--brass);
+    color: #1b1813;
+    border-radius: 8px;
+    text-decoration: none;
+}
+.download:hover { background: var(--bulb); color: #1b1813; }
+.fineprint { display: block; margin-top: 0.75rem; font-size: 0.95rem; color: var(--wall-muted); }
+
+/* --- Wall labels ------------------------------------------------------------ */
+
+.gallery { padding-block: 2rem 4rem; }
+.gallery > h2, .setup > h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 2rem;
+    color: var(--paper);
+    margin: 0 0 1.5rem;
+}
+
+.labels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: clamp(1.25rem, 3vw, 2.25rem);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.label {
+    background: var(--paper);
+    color: var(--ink);
+    padding: 1.4rem 1.5rem 1.5rem;
+    border-radius: 2px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset, 0 12px 24px -16px #000;
+}
+.label h3 { margin: 0; font-size: 1.3rem; font-weight: 600; line-height: 1.25; }
+.label .medium { margin: 0.2rem 0 0.9rem; font-style: italic; color: #6d6456; font-size: 0.98rem; }
+.label p { margin: 0; font-size: 1.02rem; line-height: 1.55; }
+
+/* --- Setup (a real sequence) --------------------------------------------------- */
+
+.setup { padding-block: 1rem 5rem; max-width: 44rem; }
+.setup ol { margin: 0; padding-left: 1.4rem; }
+.setup li { margin-bottom: 0.9rem; padding-left: 0.3rem; }
+.setup li::marker { font-family: var(--display); font-weight: 800; color: var(--brass); font-size: 1.3rem; }
+.setup .aside { color: var(--wall-muted); font-size: 1rem; }
+
+/* --- Prose pages (changelog, privacy) ------------------------------------------ */
+
+.prose { padding-block: 1rem 5rem; }
+.prose > * { max-width: 42rem; }
+.prose h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    color: var(--paper);
+    margin: 0.5rem 0 1.5rem;
+    line-height: 1;
+}
+.prose h2 { font-family: var(--display); font-weight: 700; font-size: 1.8rem; color: var(--paper); margin: 2.5rem 0 0.25rem; }
+.prose .date { color: var(--wall-muted); margin: 0 0 1rem; font-style: italic; }
+.prose ul { padding-left: 1.2rem; }
+.prose li { margin-bottom: 0.5rem; }
+.prose strong { color: var(--paper); font-weight: 600; }
+
+/* --- Footer -------------------------------------------------------------------- */
+
+footer {
+    border-top: 1px solid #3a372f;
+    padding-block: 1.75rem 2.5rem;
+    color: var(--wall-muted);
+    font-size: 0.95rem;
+}
+footer .wrap { display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; }
+footer a { color: var(--wall-text); }
+
+@media (max-width: 640px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-robot { justify-self: end; margin-top: -1rem; width: 110px; }
+    .top nav a { margin-left: 1rem; }
+}

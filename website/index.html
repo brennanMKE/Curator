@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Curator — see what Plex just added</title>
+    <meta name="description" content="Curator is a Mac app for your Plex library. It shows the newest imports as they land, searches titles, cast and crew, and shows which file each title plays.">
+
+    <meta property="og:title" content="Curator">
+    <meta property="og:description" content="See what Plex just added. A Mac companion for your Plex library.">
+    <meta property="og:image" content="https://curator.sstools.co/assets/social-card.png">
+    <meta property="og:url" content="https://curator.sstools.co/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://curator.sstools.co/assets/social-card.png">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <link rel="alternate" type="application/rss+xml" title="Curator updates" href="appcast.xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="wrap top">
+        <a class="brand" href="./"><img src="assets/curator-icon.png" alt="" width="36" height="36">Curator</a>
+        <nav>
+            <a href="changelog.html">Changelog</a>
+            <a href="https://github.com/brennanMKE/Curator">Source</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="wrap hero" aria-labelledby="headline">
+            <div class="marquee" role="img" aria-label="A theater marquee reading: Just added, Die Hard 2, 34 minutes ago">
+                <div class="board-row board-row--small" aria-hidden="true" data-text="JUST ADDED"></div>
+                <div class="board-row board-row--big" aria-hidden="true" data-text="DIE HARD 2"></div>
+                <div class="board-row board-row--small" aria-hidden="true" data-text="34 MIN AGO"></div>
+            </div>
+            <img class="hero-robot" src="assets/curator-robot.svg" alt="" width="210" height="310">
+
+            <div class="lede">
+                <h1 id="headline">See what Plex just added.</h1>
+                <p>
+                    Curator is a Mac app for your Plex library. Import a disc and watch it land:
+                    the newest titles come first, anything from the last three hours is marked
+                    new, and every title shows exactly which file Plex will play.
+                </p>
+                <!-- LATEST: updated by scripts/update-website.sh -->
+                <a class="download" href="https://github.com/brennanMKE/Curator/releases/latest">Download Curator</a>
+                <span class="fineprint">Free and open source. Requires macOS 26 and a Plex Media Server.</span>
+                <!-- /LATEST -->
+            </div>
+        </section>
+
+        <section class="wrap gallery" aria-labelledby="gallery-title">
+            <h2 id="gallery-title">In the collection</h2>
+            <ul class="labels">
+                <li class="label">
+                    <h3>Recently Added</h3>
+                    <p class="medium">Refreshed every minute</p>
+                    <p>Every library, newest first, grouped by day. A banner appears when a title lands, and the menu bar keeps your last five imports one click away.</p>
+                </li>
+                <li class="label">
+                    <h3>Search</h3>
+                    <p class="medium">Titles, cast and crew</p>
+                    <p>Type a title, an actor or a director. When a match comes from the cast or crew, Curator says why: “Director: Joel Coen.”</p>
+                </li>
+                <li class="label">
+                    <h3>The details</h3>
+                    <p class="medium">Down to the file</p>
+                    <p>Artwork, summary, cast, when it was added, the video format, and the path and size of the file on your server. Open it in Plex with one click.</p>
+                </li>
+                <li class="label">
+                    <h3>At home on a Mac</h3>
+                    <p class="medium">Grid or list, keyboard first</p>
+                    <p>Arrow keys move through posters, Return opens a title in Plex, and Space shows a quick preview. Updates install themselves.</p>
+                </li>
+            </ul>
+        </section>
+
+        <section class="wrap setup" aria-labelledby="setup-title">
+            <h2 id="setup-title">Set up in a minute</h2>
+            <ol>
+                <li>Download Curator, open the disk image and drag Curator to Applications.</li>
+                <li>Open Settings and enter your Plex server’s address, such as <code>my-plex-mac</code> or its IP address.</li>
+                <li>Paste your Plex token. Settings walks you through finding it in Plex Web.</li>
+            </ol>
+            <p class="aside">Posters come from your Plex server. Add a free TMDB key in Settings if you’d like TMDB’s artwork instead.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <a href="changelog.html">Changelog</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="https://github.com/brennanMKE/Curator">Source on GitHub</a>
+            <span>MIT license. Not affiliated with Plex.</span>
+        </div>
+    </footer>
+
+    <script>
+        // Build the marquee's letter tiles from each row's text; the flip is CSS only.
+        let i = 0;
+        for (const row of document.querySelectorAll(".board-row")) {
+            for (const ch of row.dataset.text) {
+                const tile = document.createElement("span");
+                tile.className = ch === " " ? "tile space" : "tile";
+                tile.textContent = ch === " " ? "" : ch;
+                tile.style.setProperty("--i", i++);
+                row.append(tile);
+            }
+        }
+    </script>
+</body>
+</html>

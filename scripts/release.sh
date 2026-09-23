@@ -6,7 +6,7 @@
 #
 # Steps: preflight -> build and sign with Developer ID (make-dmg.sh) -> check the built
 # version -> notarize -> staple -> verify-dmg.sh -> rename. Tagging and publishing are
-# separate: scripts/tag-release.sh, then scripts/publish-release.sh.
+# separate steps; see docs/releasing.md.
 #
 # Notarizing uploads the DMG to Apple, so a person starts this script.
 #
@@ -77,4 +77,5 @@ mv "$WORK_DMG" "$FINAL_DMG"
 (cd "$DIST_DIR" && shasum -a 256 "${FINAL_DMG:t}" > "${FINAL_DMG:t}.sha256")
 log "Done: $FINAL_DMG"
 cat "$FINAL_DMG.sha256"
-print "Next: scripts/tag-release.sh --push, then scripts/publish-release.sh"
+print "Next: scripts/update-website.sh, commit website/, scripts/tag-release.sh --push,"
+print "      scripts/publish-release.sh, then scripts/deploy-website.sh"

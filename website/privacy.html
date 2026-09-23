@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Privacy — Curator</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="wrap top">
+        <a class="brand" href="./"><img src="assets/curator-icon.png" alt="" width="36" height="36">Curator</a>
+        <nav>
+            <a href="changelog.html">Changelog</a>
+            <a href="https://github.com/brennanMKE/Curator">Source</a>
+        </nav>
+    </header>
+
+    <main class="wrap prose">
+        <h1>Privacy</h1>
+        <p>Curator collects nothing about you and has no analytics. It talks to three places:</p>
+        <ul>
+            <li><strong>Your Plex Media Server</strong>, at the address you enter, to list and search your library.</li>
+            <li><strong>TMDB</strong>, only if you add a TMDB key, to fetch posters and backdrops for titles in your library.</li>
+            <li><strong>curator.sstools.co</strong>, to check for updates. The request identifies only Curator’s version; nothing about your library is sent.</li>
+        </ul>
+        <p>Your server address, Plex token and TMDB key stay on your Mac, in a settings file only you can read.</p>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <a href="./">Home</a>
+            <a href="changelog.html">Changelog</a>
+            <a href="https://github.com/brennanMKE/Curator">Source on GitHub</a>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,64 +1,66 @@
 # Releasing Curator
 
-Releases are GitHub releases with a notarized DMG attached. The scripts are modelled on Batty's
-(`../Batty/scripts/`), without Batty's embedded binaries, beta scheme, Sparkle or website.
-Sparkle updates and a download website are planned (PLAN.md, milestone 6).
+Each release is notarized, published on GitHub with the DMG attached, and published on
+[curator.sstools.co](https://curator.sstools.co/) with a signed Sparkle feed entry, so
+installed copies update themselves. The scripts are modelled on Batty's (`../Batty/scripts/`),
+without Batty's embedded binaries and beta scheme.
 
 ## Once per Mac: credentials
 
-| Needed | Where | Check |
+| Needed | Where | Used for |
 |---|---|---|
-| Developer ID Application certificate and private key | login keychain | `scripts/preflight.sh --credentials-only` |
-| App Store Connect API key `AuthKey_DWLP54ACTJ.p8` | `~/.appstoreconnect/`, mode 600 | same |
-| `gh` signed in to github.com | `gh auth login` | same |
+| Developer ID Application certificate and private key | login keychain | signing |
+| App Store Connect API key `AuthKey_DWLP54ACTJ.p8` | `~/.appstoreconnect/`, mode 600 | notarizing |
+| Sparkle EdDSA private key | `~/.sparkle/Curator.key`, mode 600 | signing updates |
+| `gh` signed in | `gh auth login` | GitHub releases |
+| `CURATOR_WEB_HOST`, `CURATOR_WEB_PATH` | environment | uploading the website |
 
-Curator passes the API key file straight to `notarytool`, so it adds nothing to the Keychain. If
-you'd rather use an existing notarytool profile, set `NOTARY_PROFILE` (for example
-`NOTARY_PROFILE=Batty-notary`) and the scripts use that instead.
+`scripts/preflight.sh --credentials-only` checks the signing, notary and GitHub rows.
 
-The key and the certificate move between Macs the way Batty's do: see Batty's
-`scripts/RELEASE-CREDENTIALS.md`. Treat the `.p8` like a password; App Store Connect won't let
-you download it again.
+**No Keychain for Curator.** The notary key and the Sparkle key are files, passed straight to
+`notarytool` and to Sparkle's `sign_update --ed-key-file`. To use an existing notarytool
+profile instead, set `NOTARY_PROFILE` (for example `Batty-notary`).
+
+**The Sparkle key.** `~/.sparkle/Curator.key` holds the base64 of a 32-byte Ed25519 seed,
+Sparkle's own export format. Its public half, `SU_PUBLIC_ED_KEY` in `Config/App.xcconfig`, is
+compiled into every copy of Curator. **If the private key is lost, installed copies can never
+verify another update.** Back it up somewhere safe, apart from this Mac. Preflight checks that
+the key file matches the public key the app ships.
+
+Moving credentials between Macs works like Batty's: see Batty's
+`scripts/RELEASE-CREDENTIALS.md`. For the Sparkle key, copy `~/.sparkle/Curator.key`.
 
 ## Each release
 
-1. **Version.** Set `MARKETING_VERSION` in `Config/App.xcconfig` (X.Y.Z). It's the only place
-   the version lives; preflight fails if the project file sets one.
-2. **Notes.** Add a `## X.Y.Z` section to `CHANGELOG.md`. It becomes the release notes.
-3. **Commit** both, on `main`.
-4. **Check:** `scripts/preflight.sh`. This is read-only. It checks the tools, the certificate and
-   its expiry, that Apple accepts the notary key, `gh`, the version (X.Y.Z, newer than the last
-   release, tag free), the changelog section, a clean tree on `main`, and that you're not behind
-   `origin/main`.
-5. **Build:** `scripts/release.sh`. It runs preflight, then:
-   - builds and signs with Developer ID (`make-dmg.sh`), with the build number set to the UTC
-     date and time
-   - checks the built app has exactly that version and build
-   - notarizes (a few minutes; this uploads the DMG to Apple)
-   - staples the ticket
-   - runs `scripts/verify-dmg.sh`
+1. **Version:** set `MARKETING_VERSION` in `Config/App.xcconfig` (X.Y.Z). It's the only place
+   the version lives.
+2. **Notes:** add a `## X.Y.Z` section to `CHANGELOG.md`. It becomes the GitHub release notes,
+   Sparkle's update notes, and `changelog.html`.
+3. **Commit** both on `main`, then check with `scripts/preflight.sh` (read-only).
+4. **Build:** `scripts/release.sh`. It runs preflight, builds and signs with Developer ID,
+   checks the version, notarizes, staples and runs `scripts/verify-dmg.sh`. The result is
+   `dist/Curator-X.Y.Z.dmg` plus `.sha256`.
+5. **Website:** `scripts/update-website.sh`. It copies the DMG to `website/downloads/`, signs it
+   and adds its Sparkle item to `appcast.xml`, rebuilds `changelog.html`, and points the
+   download button at the new DMG. Commit `website/`.
+6. **Tag:** `scripts/tag-release.sh --push` pushes `main` and `vX.Y.Z`.
+7. **GitHub:** `scripts/publish-release.sh`, with `--draft` to review first.
+8. **Go live:** `scripts/deploy-website.sh`. It uploads the site, and from then on installed
+   copies see the update. Use `--dry-run` to check what will change first.
 
-   The result is `dist/Curator-X.Y.Z.dmg` plus a `.sha256` file.
-6. **Tag:** `scripts/tag-release.sh --push`. This creates an annotated `vX.Y.Z` tag and pushes
-   `main` and the tag.
-7. **Publish:** `scripts/publish-release.sh`. It creates the GitHub release with the DMG and its
-   `.sha256` attached, and the changelog section as the notes. Add `--draft` to review it on
-   GitHub before it goes public.
+Steps 4 to 8 reach Apple, GitHub and the web host, so a person runs them.
 
-Steps 5 to 7 reach outside this Mac (Apple, GitHub), so a person runs them.
-
-## Checking any DMG
+## Checking a DMG
 
 ```sh
 scripts/verify-dmg.sh dist/Curator-X.Y.Z.dmg
 ```
 
-It checks the stapled ticket, Gatekeeper on the DMG, and a copy with the quarantine flag a
-browser download adds. That last one is what people actually hit. Then it mounts the DMG and
-checks the app: signature, hardened runtime, Developer ID, secure timestamp, no debugging
+It checks the stapled ticket, Gatekeeper on the DMG, and a copy flagged as downloaded. Then it
+checks the app inside: signature, hardened runtime, Developer ID, secure timestamp, no debugging
 entitlement, Gatekeeper, and the Applications link.
 
 ## Quick builds for your own Macs
 
-`scripts/make-dmg.sh` makes a Developer ID–signed DMG without notarizing it. That's fine for
-your own Macs; copy it with `scp` so macOS doesn't mark it as downloaded.
+`scripts/make-dmg.sh` makes a Developer ID–signed DMG without notarizing it. Copy it with `scp`
+so macOS doesn't flag it as downloaded.

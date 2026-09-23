@@ -83,6 +83,29 @@ else
     fail "no App Store Connect key at $ASC_KEY_PATH (see docs/releasing.md)"
 fi
 
+# --- Sparkle and the website ----------------------------------------------------
+
+section "Sparkle and the website"
+SPARKLE_KEY="${SPARKLE_KEY_FILE:-$HOME/.sparkle/Curator.key}"
+if [[ -f "$SPARKLE_KEY" ]]; then
+    pass "Sparkle key at $SPARKLE_KEY"
+    # Derive the public key from the private seed and compare it with the one the app ships.
+    derived="$( { printf '\x30\x2e\x02\x01\x00\x30\x05\x06\x03\x2b\x65\x70\x04\x22\x04\x20'; base64 -d < "$SPARKLE_KEY"; } \
+        | openssl pkey -inform DER -pubout -outform DER 2>/dev/null | tail -c 32 | base64)"
+    # sed, not awk -F=: base64 keys end in "=".
+    shipped="$(sed -n 's/^SU_PUBLIC_ED_KEY *= *//p' "$XCCONFIG" | tr -d ' ')"
+    [[ -n "$derived" && "$derived" == "$shipped" ]] && pass "key matches SU_PUBLIC_ED_KEY in Config/App.xcconfig" \
+        || fail "the Sparkle key doesn't match SU_PUBLIC_ED_KEY; updates signed with it would be rejected"
+else
+    fail "no Sparkle key at $SPARKLE_KEY (see docs/releasing.md)"
+fi
+xmllint --noout "$REPO_ROOT/website/appcast.xml" 2>/dev/null && pass "website/appcast.xml is valid XML" || fail "website/appcast.xml isn't valid XML"
+if [[ -n "${CURATOR_WEB_HOST:-}" && -n "${CURATOR_WEB_PATH:-}" ]]; then
+    pass "deploy target $CURATOR_WEB_HOST:$CURATOR_WEB_PATH"
+else
+    warn "CURATOR_WEB_HOST / CURATOR_WEB_PATH not set; scripts/deploy-website.sh will need them"
+fi
+
 # --- GitHub ------------------------------------------------------------------
 
 section "GitHub"
