@@ -12,11 +12,15 @@ Reference docs: `~/Developer/Homelab/docs/plex-search-api.md` and
 Every Plex library call needs the **Plex token** (401 without it), so Settings has three
 fields:
 
-| Field | Default | Stored in |
+| Field | `.env` key | Default |
 |---|---|---|
-| Plex server URL | `http://joe:32400` | UserDefaults |
-| Plex token | — (help: `ssh joe 'defaults read com.plexapp.plexmediaserver PlexOnlineToken'`) | Keychain |
-| TMDB API key | — (v3 key or v4 read token) | Keychain |
+| Plex server URL | `PLEX_URL` | `http://joe:32400` |
+| Plex token | `PLEX_TOKEN` | — (help: `ssh joe 'defaults read com.plexapp.plexmediaserver PlexOnlineToken'`) |
+| TMDB API key | `TMDB_API_KEY` | — (v3 key or v4 read token) |
+
+Values live in a `.env` file (mode 0600) in the app's Application Support folder, with the
+same keys as the repo's `.env.example`. **Import .env…** in Settings loads them from the
+repo's `.env`. Curator never uses the Keychain.
 
 **Test Connection** hits `/` (name + version) and `/library/sections` and shows the server,
 the libraries and their item counts, or a specific error ("401: token rejected"). Section
@@ -66,7 +70,7 @@ Empty state explains word-prefix matching and that an unmatched file on disk won
 ```
 Curator/
   CuratorApp.swift         WindowGroup + Settings scene
-  Settings/SettingsStore   @Observable; UserDefaults + Keychain
+  Settings/SettingsStore   @Observable; .env file in Application Support
   Settings/SettingsView    fields + Test Connection
   Plex/PlexClient          async URLSession, Accept: application/json, token header
   Plex/PlexModels          Codable: MediaContainer, Metadata, Guid, Media, Part, Hub
@@ -79,6 +83,9 @@ Curator/
 
 - macOS 26, Swift 6 language mode, MainActor default isolation, `@Observable`,
   async/await. No dependencies.
+- Signed with **Developer ID Application (XV8BAAVZ6V)**, manual style, hardened runtime.
+  Manual signing never contacts the developer portal. Agents build and test unsigned
+  (`CODE_SIGNING_ALLOWED=NO`); signed builds are run by a person.
 - Plain HTTP to joe: `NSAllowsLocalNetworking` (ATS), `NSLocalNetworkUsageDescription`,
   sandbox outgoing-network entitlement.
 - Guard against Plex's silent failures: only send known filter fields (a bad field returns

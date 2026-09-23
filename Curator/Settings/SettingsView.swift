@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(LibraryStore.self) private var library
     @Environment(TMDBStore.self) private var tmdb
     @State private var isTesting = false
+    @State private var importMessage: String?
 
     private static let tokenCommand = "ssh joe 'defaults read com.plexapp.plexmediaserver PlexOnlineToken'"
 
@@ -57,6 +58,19 @@ struct SettingsView: View {
             }
 
             Section {
+                HStack {
+                    Button("Import .env…") { importEnvFile() }
+                    Button("Show in Finder") {
+                        NSWorkspace.shared.activateFileViewerSelecting([settings.fileURL])
+                    }
+                    Spacer()
+                }
+                caption(importMessage ?? "Saved to \(settings.fileURL.path(percentEncoded: false)) using the keys in .env.example.")
+            } header: {
+                Text("Storage")
+            }
+
+            Section {
                 PlexStatusRow()
                 TMDBStatusRow()
                 HStack {
@@ -83,6 +97,25 @@ struct SettingsView: View {
         async let plex: Void = library.refresh(using: settings)
         await tmdb.validate(using: settings)
         await plex
+    }
+
+    private func importEnvFile() {
+        let panel = NSOpenPanel()
+        panel.title = "Import .env"
+        panel.message = "Choose a .env file with PLEX_URL, PLEX_TOKEN or TMDB_API_KEY."
+        panel.showsHiddenFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let imported = settings.importValues(from: try EnvFile(contentsOf: url))
+            importMessage = imported.isEmpty
+                ? "No PLEX_URL, PLEX_TOKEN or TMDB_API_KEY in \(url.lastPathComponent)."
+                : "Imported \(imported.joined(separator: ", ")) from \(url.path(percentEncoded: false))."
+        } catch {
+            importMessage = "Couldn't read \(url.lastPathComponent): \(error.localizedDescription)"
+        }
     }
 
     private func caption(_ text: String, color: Color = .secondary) -> some View {
