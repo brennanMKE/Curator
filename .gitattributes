@@ -1,0 +1,18 @@
+* text=auto eol=lf
+
+# Xcode project files: normal text diffs and merges (union merges can silently corrupt pbxproj)
+*.pbxproj text
+*.xcscheme text
+*.plist text
+*.entitlements text
+*.xcconfig text
+*.swift text diff=swift
+*.md text diff=markdown
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.icns binary
+*.car binary
