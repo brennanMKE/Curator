@@ -13,7 +13,7 @@ struct SearchResultsView: View {
                 if results.isEmpty {
                     emptyState(for: results.query)
                 } else {
-                    PosterGrid(
+                    ItemCollectionView(
                         sections: sections(results),
                         selection: $selection,
                         subtitle: { item in
@@ -44,13 +44,13 @@ struct SearchResultsView: View {
         count == 1 ? "1 result" : "\(count) results"
     }
 
-    private func sections(_ results: SearchResults) -> [PosterSection] {
-        var sections: [PosterSection] = []
+    private func sections(_ results: SearchResults) -> [ItemSection] {
+        var sections: [ItemSection] = []
         if !results.titleMatches.isEmpty {
-            sections.append(PosterSection(id: "titles", title: "Titles", items: results.titleMatches))
+            sections.append(ItemSection(id: "titles", title: "Titles", items: results.titleMatches))
         }
         if !results.otherMatches.isEmpty {
-            sections.append(PosterSection(id: "other", title: "Matched Cast, Crew & Similar Titles", items: results.otherMatches))
+            sections.append(ItemSection(id: "other", title: "Matched Cast, Crew & Similar Titles", items: results.otherMatches))
         }
         return sections
     }

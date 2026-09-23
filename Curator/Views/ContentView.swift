@@ -22,6 +22,9 @@ struct ContentView: View {
     @State private var sidebarSelection: SidebarItem? = .recentlyAdded
     @State private var selectedItem: PlexItem?
     @State private var showInspector = false
+    @State private var previewItem: PlexItem?
+    @AppStorage(ViewMode.storageKey) private var viewMode = ViewMode.grid
+    @Environment(\.openURL) private var openURL
     @FocusState private var searchFocused: Bool
 
     var body: some View {
@@ -46,7 +49,23 @@ struct ContentView: View {
         .searchable(text: $search.query, placement: .toolbar, prompt: "Titles, actors, directors")
         .searchFocused($searchFocused)
         .focusedSceneValue(\.focusSearch, FocusSearchAction { searchFocused = true })
+        .environment(\.itemActions, ItemActions(
+            preview: { previewItem = $0 },
+            open: openInPlex
+        ))
+        .sheet(item: $previewItem) { item in
+            ItemPreview(item: item)
+                .environment(\.itemActions, ItemActions(open: openInPlex))
+        }
         .toolbar {
+            ToolbarItem {
+                Picker("View", selection: $viewMode) {
+                    Label("Grid", systemImage: "square.grid.2x2").tag(ViewMode.grid)
+                    Label("List", systemImage: "list.bullet").tag(ViewMode.list)
+                }
+                .pickerStyle(.segmented)
+                .help("Show as grid or list")
+            }
             ToolbarItem {
                 Button("Refresh", systemImage: "arrow.clockwise") {
                     Task { await library.refresh(using: settings) }
@@ -75,6 +94,15 @@ struct ContentView: View {
             selectedItem = item
             showInspector = true
         }
+    }
+}
+
+extension ContentView {
+    private func openInPlex(_ item: PlexItem) {
+        guard let server = library.server,
+              let url = settings.plexClient?.webURL(for: item, machineIdentifier: server.machineIdentifier)
+        else { return }
+        openURL(url)
     }
 }
 

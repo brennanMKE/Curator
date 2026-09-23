@@ -153,14 +153,7 @@ private struct MenuBarRow: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 4)
-                if isNew {
-                    Text("NEW")
-                        .font(.caption2.bold())
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .background(.tint, in: .capsule)
-                        .foregroundStyle(.white)
-                }
+                if isNew { NewBadge() }
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 4)

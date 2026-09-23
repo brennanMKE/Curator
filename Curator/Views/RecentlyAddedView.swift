@@ -53,9 +53,9 @@ struct RecentlyAddedView: View {
             )
         } else {
             TimelineView(.everyMinute) { context in
-                PosterGrid(
+                ItemCollectionView(
                     sections: RecentGroup.sections(recent.items, now: context.date).map {
-                        PosterSection(id: $0.group.rawValue, title: $0.group.rawValue, items: $0.items)
+                        ItemSection(id: $0.group.rawValue, title: $0.group.rawValue, items: $0.items)
                     },
                     selection: $selection,
                     subtitle: { item in

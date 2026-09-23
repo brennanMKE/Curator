@@ -28,8 +28,8 @@ struct LibraryBrowseView: View {
                     )
                 }
             } else {
-                PosterGrid(
-                    sections: [PosterSection(id: store.section.id, title: nil, items: store.items)],
+                ItemCollectionView(
+                    sections: [ItemSection(id: store.section.id, title: nil, items: store.items)],
                     selection: $selection,
                     onReachEnd: {
                         guard let client = settings.plexClient else { return }
