@@ -5,6 +5,7 @@ struct CuratorApp: App {
     @State private var model = AppModel.forLaunch()
     @State private var artwork = ArtworkLoader()
     @State private var navigation = AppNavigation()
+    @State private var updater = UpdaterController()
 
     var body: some Scene {
         Window("Curator", id: "main") {
@@ -21,7 +22,7 @@ struct CuratorApp: App {
         }
         .defaultSize(width: 1100, height: 750)
         .commands {
-            CuratorCommands(model: model)
+            CuratorCommands(model: model, updater: updater)
         }
 
         MenuBarExtra {
@@ -51,9 +52,16 @@ struct CuratorApp: App {
 
 private struct CuratorCommands: Commands {
     let model: AppModel
+    let updater: UpdaterController
     @FocusedValue(\.focusSearch) private var focusSearch
 
     var body: some Commands {
+        CommandGroup(after: .appInfo) {
+            if updater.isConfigured {
+                Button("Check for Updates…") { updater.checkForUpdates() }
+                    .disabled(!updater.canCheckForUpdates)
+            }
+        }
         CommandGroup(before: .toolbar) {
             Button("Search Library") { focusSearch?() }
                 .keyboardShortcut("f")

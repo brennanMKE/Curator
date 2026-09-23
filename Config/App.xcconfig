@@ -7,3 +7,11 @@
 
 MARKETING_VERSION = 0.0.1
 CURRENT_PROJECT_VERSION = 1
+
+// Sparkle updates. `//` starts a comment in xcconfig files, hence the HTTPS variable.
+// Only Release builds get a feed URL, so Debug builds never try to update themselves.
+HTTPS = https:/
+SU_FEED_URL =
+SU_FEED_URL[config=Release] = $(HTTPS)/curator.sstools.co/appcast.xml
+// Public half of the EdDSA key in ~/.sparkle/Curator.key (see docs/releasing.md).
+SU_PUBLIC_ED_KEY = Bb5uaj2ZXEalA2ArqCphMU7nj4GkNXHuExqUUOQYNsE=

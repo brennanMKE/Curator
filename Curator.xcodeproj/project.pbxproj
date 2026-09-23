@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C0A0000000000000000000C1 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = C0A0000000000000000000C2 /* Sparkle */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		C0A000000000000000000020 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -26,6 +30,7 @@
 /* Begin PBXFileReference section */
 		C0A000000000000000000011 /* Curator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Curator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0A000000000000000000031 /* CuratorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CuratorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0A000000000000000000054 /* Curator.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Curator.entitlements; sourceTree = "<group>"; };
 		C0A000000000000000000053 /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
 		C0A000000000000000000050 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C0A000000000000000000051 /* PLAN.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PLAN.md; sourceTree = "<group>"; };
@@ -55,6 +60,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0A0000000000000000000C1 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,6 +107,7 @@
 			isa = PBXGroup;
 			children = (
 				C0A000000000000000000053 /* App.xcconfig */,
+				C0A000000000000000000054 /* Curator.entitlements */,
 				C0A000000000000000000050 /* Info.plist */,
 			);
 			path = Config;
@@ -126,6 +133,7 @@
 			);
 			name = Curator;
 			packageProductDependencies = (
+				C0A0000000000000000000C2 /* Sparkle */,
 			);
 			productName = Curator;
 			productReference = C0A000000000000000000011 /* Curator.app */;
@@ -210,6 +218,9 @@
 			);
 			mainGroup = C0A000000000000000000002;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C0A0000000000000000000C3 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C0A000000000000000000003 /* Products */;
 			projectDirPath = "";
@@ -368,6 +379,7 @@
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/Curator.entitlements;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Curator;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
@@ -402,6 +414,7 @@
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/Curator.entitlements;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Curator;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
@@ -537,6 +550,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C0A0000000000000000000C3 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C0A0000000000000000000C2 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0A0000000000000000000C3 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C0A000000000000000000001 /* Project object */;
 }
