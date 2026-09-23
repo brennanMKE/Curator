@@ -36,14 +36,26 @@ nonisolated struct SearchResults: Sendable, Equatable {
 
 @Observable
 final class SearchStore {
-    var query = ""
+    static let debounce: Duration = .milliseconds(300)
+
+    /// Bound to the search field. Changing it schedules a search; the view never does.
+    var query = "" {
+        didSet {
+            guard query.trimmed != oldValue.trimmed else { return }
+            schedule(after: Self.debounce)
+        }
+    }
+
     /// The latest completed search; its `query` may lag behind what's being typed.
     private(set) var results: SearchResults?
+    /// True from the first keystroke until results for the current text arrive.
     private(set) var isSearching = false
     private(set) var error: PlexError?
     /// The query `error` belongs to.
     private(set) var errorQuery: String?
 
+    @ObservationIgnored var context: () -> PlexContext? = { nil }
+    @ObservationIgnored private var task: Task<Void, Never>?
     /// Each search supersedes the ones before it, so a cancelled or slow search can't
     /// clear `isSearching` early or overwrite newer results.
     @ObservationIgnored private var generation = 0
@@ -59,45 +71,79 @@ final class SearchStore {
         errorQuery == trimmedQuery ? error : nil
     }
 
-    func search(client: PlexClient, sections: [PlexSection]) async {
+    /// Searches again immediately, e.g. after reconnecting.
+    func rerun() {
+        schedule(after: .zero)
+    }
+
+    private func schedule(after delay: Duration) {
+        task?.cancel()
         generation += 1
         let current = generation
         let text = trimmedQuery
+
         guard !text.isEmpty else {
             results = nil
             error = nil
+            errorQuery = nil
             isSearching = false
             return
         }
-
         isSearching = true
-        defer { if current == generation { isSearching = false } }
 
+        task = Task { [weak self] in
+            if delay > .zero {
+                try? await Task.sleep(for: delay)
+            }
+            guard !Task.isCancelled else { return }
+            await self?.perform(text, generation: current)
+        }
+    }
+
+    private func perform(_ text: String, generation current: Int) async {
+        guard let context = context() else {
+            // Not connected; the next connect calls rerun().
+            if current == generation { isSearching = false }
+            return
+        }
+        Log.plex.debug("Search \"\(text, privacy: .public)\" started")
+
+        let result: Result<SearchResults, PlexError>
         do {
-            async let hubs = try? client.hubSearch(text)
+            async let hubs = try? context.client.hubSearch(text)
             let titles = try await withThrowingTaskGroup(of: (Int, [PlexItem]).self) { group in
-                for (index, section) in sections.enumerated() {
-                    group.addTask { (index, try await client.search(title: text, in: section)) }
+                for (index, section) in context.sections.enumerated() {
+                    group.addTask { (index, try await context.client.search(title: text, in: section)) }
                 }
                 var found: [(Int, [PlexItem])] = []
                 for try await result in group { found.append(result) }
                 return found.sorted { $0.0 < $1.0 }.map(\.1)
             }
-            let merged = SearchResults.merge(query: text, titleMatches: titles, hubs: await hubs ?? [])
-            guard current == generation else { return }
+            result = .success(SearchResults.merge(query: text, titleMatches: titles, hubs: await hubs ?? []))
+        } catch is CancellationError {
+            result = .failure(.cancelled)
+        } catch {
+            result = .failure(error as? PlexError ?? .badResponse)
+        }
+
+        // Only the newest search may touch state.
+        guard current == generation else {
+            Log.plex.debug("Search \"\(text, privacy: .public)\" superseded")
+            return
+        }
+        isSearching = false
+        switch result {
+        case .success(let merged):
             results = merged
             error = nil
             errorQuery = nil
             Log.plex.info("Search \"\(text, privacy: .public)\": \(merged.titleMatches.count) titles, \(merged.otherMatches.count) other")
-        } catch PlexError.cancelled {
-            Log.plex.debug("Search \"\(text, privacy: .public)\" cancelled")
-        } catch is CancellationError {
-            Log.plex.debug("Search \"\(text, privacy: .public)\" cancelled")
-        } catch {
-            guard current == generation else { return }
-            self.error = error as? PlexError ?? .badResponse
+        case .failure(.cancelled):
+            break
+        case .failure(let failure):
+            error = failure
             errorQuery = text
-            Log.plex.error("Search \"\(text, privacy: .public)\" failed: \(error.localizedDescription, privacy: .public)")
+            Log.plex.error("Search \"\(text, privacy: .public)\" failed: \(failure.localizedDescription, privacy: .public)")
         }
     }
 }

@@ -5,10 +5,11 @@ import SwiftUI
 struct ItemDetailView: View {
     let item: PlexItem
 
-    @Environment(SettingsStore.self) private var settings
     @Environment(LibraryStore.self) private var library
-    @Environment(\.openURL) private var openURL
-    @State private var detail: PlexItem?
+    @Environment(ItemDetailStore.self) private var details
+    @Environment(\.itemActions) private var actions
+
+    private var detail: PlexItem? { details.detail(for: item.ratingKey) }
 
     /// Listings and hub results carry partial metadata; the full record fills in when loaded.
     private var shown: PlexItem { detail ?? item }
@@ -23,8 +24,8 @@ struct ItemDetailView: View {
 
                 header
 
-                if let url = webURL {
-                    Button("Open in Plex", systemImage: "play.rectangle.fill") { openURL(url) }
+                if library.server != nil {
+                    Button("Open in Plex", systemImage: "play.rectangle.fill") { actions.open(shown) }
                         .buttonStyle(.borderedProminent)
                 }
 
@@ -39,10 +40,8 @@ struct ItemDetailView: View {
             }
             .padding(16)
         }
-        .task(id: item.id) {
-            detail = nil
-            guard let client = settings.plexClient else { return }
-            detail = try? await client.item(ratingKey: item.ratingKey)
+        .onChange(of: item.ratingKey, initial: true) {
+            details.load(item.ratingKey)
         }
     }
 
@@ -118,10 +117,5 @@ struct ItemDetailView: View {
         Text(title)
             .foregroundStyle(.secondary)
             .gridColumnAlignment(.trailing)
-    }
-
-    private var webURL: URL? {
-        guard let server = library.server else { return nil }
-        return settings.plexClient?.webURL(for: shown, machineIdentifier: server.machineIdentifier)
     }
 }

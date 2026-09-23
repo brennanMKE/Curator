@@ -3,7 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(LibraryStore.self) private var library
-    @Environment(TMDBStore.self) private var tmdb
+    @Environment(AppModel.self) private var model
     @State private var isTesting = false
     @State private var importMessage: String?
 
@@ -94,9 +94,7 @@ struct SettingsView: View {
         isTesting = true
         defer { isTesting = false }
 
-        async let plex: Void = library.refresh(using: settings)
-        await tmdb.validate(using: settings)
-        await plex
+        await model.testConnection()
     }
 
     private func importEnvFile() {

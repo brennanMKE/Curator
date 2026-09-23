@@ -3,8 +3,6 @@ import SwiftUI
 struct SearchResultsView: View {
     @Binding var selection: PlexItem?
 
-    @Environment(SettingsStore.self) private var settings
-    @Environment(LibraryStore.self) private var library
     @Environment(SearchStore.self) private var search
 
     var body: some View {
@@ -31,11 +29,6 @@ struct SearchResultsView: View {
         }
         .navigationTitle("Search")
         .navigationSubtitle(search.currentResults.map { resultCount($0.titleMatches.count + $0.otherMatches.count) } ?? "Searching…")
-        .task(id: "\(search.trimmedQuery)|\(library.revision)") {
-            try? await Task.sleep(for: .milliseconds(300))
-            guard !Task.isCancelled, let client = settings.plexClient else { return }
-            await search.search(client: client, sections: library.sections)
-        }
     }
 
     private func grid(for results: SearchResults) -> some View {

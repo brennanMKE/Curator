@@ -16,6 +16,8 @@ final class RecentStore {
     /// Items added after this moment get a "New" badge.
     private(set) var seenBaseline: Date?
 
+    @ObservationIgnored var context: () -> PlexContext? = { nil }
+    @ObservationIgnored private var loadMoreTask: Task<Void, Never>?
     @ObservationIgnored private var limit = pageSize
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var generation = 0
@@ -43,8 +45,12 @@ final class RecentStore {
     var newCount: Int { items.count(where: isNew) }
 
     /// Reloads the newest `limit` items from every library. `reset` starts over from one page
-    /// (after reconnecting); otherwise it refreshes what's shown and records arrivals.
-    func load(client: PlexClient, sections: [PlexSection], reset: Bool = false) async {
+    /// (after connecting to a different server); otherwise it refreshes what's shown and
+    /// records arrivals. Called by `AppModel`'s polling, not by views.
+    func load(reset: Bool = false) async {
+        guard let context = context() else { return }
+        let client = context.client
+        let sections = context.sections
         generation += 1
         let current = generation
         if reset {
@@ -106,10 +112,14 @@ final class RecentStore {
         }
     }
 
-    func loadMore(client: PlexClient, sections: [PlexSection]) async {
-        guard hasMore, !isLoading else { return }
+    /// Intent from the view when the last item scrolls into sight.
+    func loadMore() {
+        guard hasMore, !isLoading, loadMoreTask == nil else { return }
         limit += Self.pageSize
-        await load(client: client, sections: sections)
+        loadMoreTask = Task { [weak self] in
+            await self?.load()
+            self?.loadMoreTask = nil
+        }
     }
 
     func markAllSeen() {

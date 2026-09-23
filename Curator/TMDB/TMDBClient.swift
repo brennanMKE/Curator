@@ -52,6 +52,7 @@ nonisolated struct TMDBClient: Sendable {
         _ = try await get("authentication")
     }
 
+    @concurrent
     func images(for id: Int, type: MediaType) async throws -> Images {
         let data = try await get("\(type.rawValue)/\(id)")
         do {
@@ -81,6 +82,8 @@ nonisolated struct TMDBClient: Sendable {
         return request
     }
 
+    /// Runs off the main actor, including JSON decoding.
+    @concurrent
     private func get(_ path: String) async throws -> Data {
         let (data, response): (Data, URLResponse)
         do {

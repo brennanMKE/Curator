@@ -21,6 +21,7 @@ struct MenuBarView: View {
     static let itemLimit = 8
     static let contentHeight: CGFloat = 400
 
+    @Environment(AppModel.self) private var model
     @Environment(SettingsStore.self) private var settings
     @Environment(LibraryStore.self) private var library
     @Environment(RecentStore.self) private var recent
@@ -57,9 +58,7 @@ struct MenuBarView: View {
                     .buttonStyle(.borderless)
                     .help("Mark All as Seen")
             }
-            Button("Refresh", systemImage: "arrow.clockwise") {
-                Task { await library.refresh(using: settings) }
-            }
+            Button("Refresh", systemImage: "arrow.clockwise") { model.refresh() }
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
             .help("Refresh")

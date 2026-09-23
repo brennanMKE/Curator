@@ -15,6 +15,7 @@ extension FocusedValues {
 }
 
 struct ContentView: View {
+    @Environment(AppModel.self) private var model
     @Environment(SettingsStore.self) private var settings
     @Environment(LibraryStore.self) private var library
     @Environment(SearchStore.self) private var search
@@ -67,9 +68,7 @@ struct ContentView: View {
                 .help("Show as grid or list")
             }
             ToolbarItem {
-                Button("Refresh", systemImage: "arrow.clockwise") {
-                    Task { await library.refresh(using: settings) }
-                }
+                Button("Refresh", systemImage: "arrow.clockwise") { model.refresh() }
                 .help("Refresh (⌘R)")
                 .disabled(!settings.isPlexConfigured || library.status == .connecting)
             }
@@ -111,6 +110,7 @@ private struct MainContent: View {
     let sidebarSelection: SidebarItem?
     @Binding var selection: PlexItem?
 
+    @Environment(AppModel.self) private var model
     @Environment(SettingsStore.self) private var settings
     @Environment(LibraryStore.self) private var library
     @Environment(SearchStore.self) private var search
@@ -135,9 +135,7 @@ private struct MainContent: View {
                 Text(error.recoverySuggestion ?? "")
             } actions: {
                 HStack {
-                    Button("Try Again") {
-                        Task { await library.refresh(using: settings) }
-                    }
+                    Button("Try Again") { model.refresh() }
                     SettingsLink { Text("Open Settings…") }
                 }
             }
@@ -150,7 +148,7 @@ private struct MainContent: View {
                     RecentlyAddedView(selection: $selection)
                 case .library(let key):
                     if let item = library.libraries.first(where: { $0.id == key }) {
-                        LibraryBrowseView(section: item.section, selection: $selection)
+                        LibraryBrowseView(store: model.browseStore(for: item.section), selection: $selection)
                             .id(key)
                     } else {
                         ContentUnavailableView("Library Not Found", systemImage: "questionmark.folder")

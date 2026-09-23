@@ -83,6 +83,13 @@ Curator/
 
 - macOS 26, Swift 6 language mode, MainActor default isolation, `@Observable`,
   async/await. No dependencies.
+- **Networking is isolated from views.** `AppModel` owns connecting, the TMDB check,
+  polling and reloads after a reconnect. Views never start or cancel requests: they render
+  store state and send intents (`refresh()`, `search.query = …`, `loadNextPage()`). Each
+  store owns its tasks and tags results with a generation (search results also carry their
+  query), so a cancelled or late response can't overwrite newer state. `PlexClient` and
+  `TMDBClient` do their requests and JSON decoding off the main actor (`@concurrent`).
+  `StoreConcurrencyTests` covers the races with a stubbed, delayed network.
 - Signing, as in Batty: builds use **Apple Development** (Automatic, team XV8BAAVZ6V,
   hardened runtime); **Developer ID Application** is applied when a release is archived
   and exported. Never `-allowProvisioningUpdates`. Agents build and test unsigned

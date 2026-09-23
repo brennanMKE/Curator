@@ -15,17 +15,24 @@ final class SettingsStore {
         static let all = [serverAddress, plexToken, tmdbKey]
     }
 
+    enum Change {
+        case plex, tmdb
+    }
+
     var serverAddress: String {
-        didSet { save(Key.serverAddress, serverAddress) }
+        didSet { changed(Key.serverAddress, serverAddress, from: oldValue, .plex) }
     }
 
     var plexToken: String {
-        didSet { save(Key.plexToken, plexToken) }
+        didSet { changed(Key.plexToken, plexToken, from: oldValue, .plex) }
     }
 
     var tmdbKey: String {
-        didSet { save(Key.tmdbKey, tmdbKey) }
+        didSet { changed(Key.tmdbKey, tmdbKey, from: oldValue, .tmdb) }
     }
+
+    /// Set by `AppModel`, which reconnects or re-checks TMDB. Views don't watch settings.
+    @ObservationIgnored var onChange: ((Change) -> Void)?
 
     @ObservationIgnored let fileURL: URL
     @ObservationIgnored private var file: EnvFile
@@ -62,7 +69,7 @@ final class SettingsStore {
         TMDBClient.Credential(tmdbKey).map { TMDBClient(credential: $0) }
     }
 
-    /// Changes whenever the Plex connection details change; drives automatic reconnects.
+    /// Changes whenever the Plex connection details change.
     var plexConnectionKey: String { "\(serverURL?.absoluteString ?? "")\n\(plexToken.trimmed)" }
 
     /// Copies any of Curator's keys found in another `.env`, such as the repo's.
@@ -83,6 +90,12 @@ final class SettingsStore {
             imported.append(Key.tmdbKey)
         }
         return imported
+    }
+
+    private func changed(_ key: String, _ value: String, from oldValue: String, _ change: Change) {
+        guard value.trimmed != oldValue.trimmed else { return }
+        save(key, value)
+        onChange?(change)
     }
 
     private func save(_ key: String, _ value: String) {

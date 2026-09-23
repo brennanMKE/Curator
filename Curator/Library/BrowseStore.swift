@@ -13,6 +13,8 @@ final class BrowseStore {
     private(set) var hasLoaded = false
     private(set) var error: PlexError?
 
+    @ObservationIgnored var context: () -> PlexContext? = { nil }
+    @ObservationIgnored private var task: Task<Void, Never>?
     /// Each reload supersedes any request still in flight, so a cancelled or late
     /// response can't leave the store stuck or overwrite newer results.
     @ObservationIgnored private var generation = 0
@@ -23,23 +25,45 @@ final class BrowseStore {
 
     var hasMore: Bool { totalSize.map { items.count < $0 } ?? true }
 
-    func reload(client: PlexClient) async {
+    func loadIfNeeded() {
+        guard !hasLoaded, task == nil else { return }
+        reload()
+    }
+
+    func reload() {
+        task?.cancel()
         generation += 1
-        await fetch(start: 0, client: client, generation: generation)
+        start(at: 0)
     }
 
-    func loadNextPage(client: PlexClient) async {
+    func loadNextPage() {
         guard hasLoaded, hasMore, !isLoading else { return }
-        await fetch(start: items.count, client: client, generation: generation)
+        start(at: items.count)
     }
 
-    private func fetch(start: Int, client: PlexClient, generation current: Int) async {
+    private func start(at offset: Int) {
+        guard let client = context()?.client else { return }
+        let current = generation
+        let section = section
         isLoading = true
-        defer { if current == generation { isLoading = false } }
-        do {
-            let list = try await client.items(in: section, sort: .title, page: .init(start: start, size: Self.pageSize))
-            guard current == generation else { return }
-            if start == 0 {
+        task = Task { [weak self] in
+            let result: Result<PlexItemList, PlexError>
+            do {
+                result = .success(try await client.items(in: section, sort: .title, page: .init(start: offset, size: Self.pageSize)))
+            } catch {
+                result = .failure(error as? PlexError ?? .badResponse)
+            }
+            self?.finish(result, offset: offset, generation: current)
+        }
+    }
+
+    private func finish(_ result: Result<PlexItemList, PlexError>, offset: Int, generation current: Int) {
+        guard current == generation else { return }
+        task = nil
+        isLoading = false
+        switch result {
+        case .success(let list):
+            if offset == 0 {
                 items = list.items
             } else {
                 let known = Set(items.map(\.id))
@@ -48,11 +72,10 @@ final class BrowseStore {
             totalSize = list.totalSize ?? items.count
             error = nil
             hasLoaded = true
-        } catch PlexError.cancelled {
-            return
-        } catch {
-            guard current == generation else { return }
-            self.error = error as? PlexError ?? .badResponse
+        case .failure(.cancelled):
+            break
+        case .failure(let failure):
+            error = failure
             hasLoaded = true
         }
     }

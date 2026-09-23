@@ -3,8 +3,6 @@ import SwiftUI
 struct RecentlyAddedView: View {
     @Binding var selection: PlexItem?
 
-    @Environment(SettingsStore.self) private var settings
-    @Environment(LibraryStore.self) private var library
     @Environment(RecentStore.self) private var recent
     @State private var scrollToTop = 0
 
@@ -77,8 +75,7 @@ struct RecentlyAddedView: View {
     }
 
     private func loadMore() {
-        guard let client = settings.plexClient else { return }
-        Task { await recent.loadMore(client: client, sections: library.sections) }
+        recent.loadMore()
     }
 }
 

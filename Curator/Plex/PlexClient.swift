@@ -105,6 +105,8 @@ nonisolated struct PlexClient: Sendable {
         value.addingPercentEncoding(withAllowedCharacters: .urlUnreserved) ?? value
     }
 
+    /// Runs off the main actor, including JSON decoding.
+    @concurrent
     private func get<Container: Decodable & Sendable>(
         _ path: String,
         as _: Container.Type,

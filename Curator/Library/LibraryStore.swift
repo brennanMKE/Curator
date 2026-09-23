@@ -24,9 +24,6 @@ final class LibraryStore {
     private(set) var server: PlexServerInfo?
     private(set) var libraries: [Library] = []
     private(set) var lastRefreshed: Date?
-    /// Bumped on every successful connect, so views reload their content.
-    private(set) var revision = 0
-
     var sections: [PlexSection] { libraries.map(\.section) }
 
     @ObservationIgnored private var generation = 0
@@ -56,8 +53,10 @@ final class LibraryStore {
             self.libraries = counted
             self.lastRefreshed = .now
             self.status = .connected
-            self.revision += 1
             Log.plex.info("Connected to \(server.friendlyName ?? "Plex", privacy: .public): \(counted.count) libraries")
+        } catch PlexError.cancelled {
+            // Superseded by a newer connect, which owns the status now.
+            return
         } catch {
             guard current == generation else { return }
             reset(to: .failed(error as? PlexError ?? .unreachable(error.localizedDescription)))
