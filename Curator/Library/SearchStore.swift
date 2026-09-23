@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 
 nonisolated struct SearchResults: Sendable, Equatable {
     let query: String
@@ -36,21 +37,41 @@ nonisolated struct SearchResults: Sendable, Equatable {
 @Observable
 final class SearchStore {
     var query = ""
+    /// The latest completed search; its `query` may lag behind what's being typed.
     private(set) var results: SearchResults?
     private(set) var isSearching = false
     private(set) var error: PlexError?
+    /// The query `error` belongs to.
+    private(set) var errorQuery: String?
+
+    /// Each search supersedes the ones before it, so a cancelled or slow search can't
+    /// clear `isSearching` early or overwrite newer results.
+    @ObservationIgnored private var generation = 0
 
     var trimmedQuery: String { query.trimmed }
 
+    /// Results for exactly what's in the search field, if they've arrived.
+    var currentResults: SearchResults? {
+        results.flatMap { $0.query == trimmedQuery ? $0 : nil }
+    }
+
+    var currentError: PlexError? {
+        errorQuery == trimmedQuery ? error : nil
+    }
+
     func search(client: PlexClient, sections: [PlexSection]) async {
+        generation += 1
+        let current = generation
         let text = trimmedQuery
         guard !text.isEmpty else {
             results = nil
+            error = nil
+            isSearching = false
             return
         }
 
         isSearching = true
-        defer { isSearching = false }
+        defer { if current == generation { isSearching = false } }
 
         do {
             async let hubs = try? client.hubSearch(text)
@@ -63,16 +84,20 @@ final class SearchStore {
                 return found.sorted { $0.0 < $1.0 }.map(\.1)
             }
             let merged = SearchResults.merge(query: text, titleMatches: titles, hubs: await hubs ?? [])
-            guard !Task.isCancelled, text == trimmedQuery else { return }
+            guard current == generation else { return }
             results = merged
             error = nil
+            errorQuery = nil
+            Log.plex.info("Search \"\(text, privacy: .public)\": \(merged.titleMatches.count) titles, \(merged.otherMatches.count) other")
         } catch PlexError.cancelled {
-            return
+            Log.plex.debug("Search \"\(text, privacy: .public)\" cancelled")
         } catch is CancellationError {
-            return
+            Log.plex.debug("Search \"\(text, privacy: .public)\" cancelled")
         } catch {
-            guard text == trimmedQuery else { return }
+            guard current == generation else { return }
             self.error = error as? PlexError ?? .badResponse
+            errorQuery = text
+            Log.plex.error("Search \"\(text, privacy: .public)\" failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

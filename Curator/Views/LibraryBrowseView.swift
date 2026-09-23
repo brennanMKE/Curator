@@ -15,7 +15,7 @@ struct LibraryBrowseView: View {
     var body: some View {
         Group {
             if store.items.isEmpty {
-                if store.isLoading || store.totalSize == nil && store.error == nil {
+                if !store.hasLoaded {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let error = store.error {

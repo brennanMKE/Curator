@@ -19,6 +19,7 @@ struct MenuBarLabel: View {
 /// The status bar window: the newest imports at a glance.
 struct MenuBarView: View {
     static let itemLimit = 8
+    static let contentHeight: CGFloat = 400
 
     @Environment(SettingsStore.self) private var settings
     @Environment(LibraryStore.self) private var library
@@ -31,8 +32,12 @@ struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 0) {
             header
             Divider()
+            // A fixed height: the status bar window sizes itself once, on first render,
+            // and wouldn't grow when the list loads.
             content
-                .frame(maxWidth: .infinity, minHeight: 120)
+                .frame(maxWidth: .infinity)
+                .frame(height: Self.contentHeight)
+                .clipped()
             Divider()
             footer
         }
@@ -77,14 +82,16 @@ struct MenuBarView: View {
                 placeholder("Nothing Here Yet", systemImage: "tray", detail: nil)
             } else {
                 TimelineView(.everyMinute) { context in
-                    VStack(spacing: 2) {
-                        ForEach(recent.items.prefix(Self.itemLimit)) { item in
-                            MenuBarRow(item: item, isNew: recent.isNew(item), now: context.date) {
-                                show(item)
+                    ScrollView {
+                        VStack(spacing: 2) {
+                            ForEach(recent.items.prefix(Self.itemLimit)) { item in
+                                MenuBarRow(item: item, isNew: recent.isNew(item), now: context.date) {
+                                    show(item)
+                                }
                             }
                         }
+                        .padding(6)
                     }
-                    .padding(6)
                 }
             }
         }
