@@ -27,8 +27,9 @@ final class CuratorUITests: XCTestCase {
         let settings = app.windows["Curator Settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: 10))
 
-        // Clicking the words opens the help, as a person would.
-        let help = settings.buttons["How do I find my token?"]
+        // Clicking the words opens the help, as a person would. SwiftUI folds the title
+        // button into the disclosure triangle's accessibility element; its centre is the title.
+        let help = settings.disclosureTriangles["How do I find my token?"]
         XCTAssertTrue(help.waitForExistence(timeout: 5), "token help missing")
         help.click()
         XCTAssertTrue(text(containing: "View XML", in: settings).waitForExistence(timeout: 5), "token help didn't open")
