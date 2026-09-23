@@ -3,6 +3,16 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
+## 0.0.3
+
+Sort your libraries.
+
+- **Sort** Movies and TV Shows by title, release date, date added or rating, from the new Sort
+  menu in the toolbar. Each has a natural order (A to Z, newest first, highest first) that you
+  can flip, and Curator remembers your choice.
+- Each poster's second line shows what it's sorted by: the release date, when it was added, or
+  its rating.
+
 ## 0.0.2
 
 Fixes a crash and smooths out the poster grid.
