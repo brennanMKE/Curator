@@ -143,8 +143,8 @@ CuratorTests/       Swift Testing unit tests
 CuratorUITests/     XCUITest UI tests (VM only)
 docs/               releasing.md, ui-testing-vm.md
 Config/             App.xcconfig (the version), Info.plist (local-network ATS exception)
-scripts/            preflight, release, verify-dmg, tag-release, publish-release,
-                    make-dmg, run-ui-tests-vm
+scripts/            preflight, release, verify-dmg, update-website, tag-release,
+                    publish-release, make-dmg, run-ui-tests-vm
 Tools/              trace_icon.py (regenerates the icon and symbol from Curator.png)
 ```
 

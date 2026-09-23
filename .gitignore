@@ -31,5 +31,5 @@ Secrets.xcconfig
 # Claude Code local settings
 .claude/settings.local.json
 
-# Release DMGs are copied here for upload; they live on the web host and GitHub, not in git.
+# Release DMGs live on GitHub releases and, once deployed, on the web host; never in git.
 website/downloads/*.dmg

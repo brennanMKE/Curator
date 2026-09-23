@@ -136,9 +136,10 @@ embedded CLI/broker/XPC parts.
   - `verify-dmg.sh`
   - `appcast-item.sh`: every attribute is read from the DMG
   - `tag-release.sh`
-  - `deploy-website.sh`
-  - `setup-keys.sh`: `notarytool` profile `Curator-notary`, reusing the existing App
-    Store Connect API key
+  - `update-website.sh`: the feed entry, changelog and download button. Deploying the site
+    is a separate agent's job, and it takes the DMGs from GitHub releases.
+  - Notarizing uses the existing App Store Connect API key file directly; no notarytool
+    profile.
   - `scripts/make-dmg.sh` stays for quick non-notarized builds.
 - **Website.** A `website/` folder (index, changelog, privacy, `appcast.xml`,
   `downloads/`), deployed like Batty's (rsync to the web host).

@@ -6,8 +6,7 @@ has three jobs:
 1. The landing page (`index.html`): what Curator is, and the download.
 2. The Sparkle update feed (`appcast.xml`). Curator's Release builds check
    `https://curator.sstools.co/appcast.xml`, set in `Config/App.xcconfig`.
-3. Release DMGs (`downloads/`). They're kept out of git and are also attached to GitHub
-   releases.
+3. Release DMGs (`downloads/`), filled at deploy time from the GitHub releases; never in git.
 
 There's no build step: plain HTML and one stylesheet. The fonts are Big Shoulders Display and
 Source Serif 4, from Google Fonts.
@@ -39,8 +38,27 @@ $SHELL_BIN --headless --hide-scrollbars --force-prefers-reduced-motion --virtual
   --window-size=1200,630 --screenshot=website/assets/social-card.png "file://$PWD/website/src/social-card.html"
 ```
 
-## Deploy
+## Deploying (handled by a separate agent)
 
-`scripts/deploy-website.sh` rsyncs this folder to the web host. It needs `CURATOR_WEB_HOST`
-and `CURATOR_WEB_PATH`. The host also needs a DNS record for `curator.sstools.co` and HTTPS,
-set up the same way as Batty's. See `docs/releasing.md`.
+This repo only prepares `website/`. Each release, `scripts/update-website.sh` updates
+`appcast.xml`, `changelog.html` and the download button, and the result is committed. Whoever
+deploys the site does this:
+
+1. **Upload `website/`** to the web root for `https://curator.sstools.co/`, leaving out `src/`
+   and this `README.md`.
+2. **Fill `downloads/` from GitHub releases.** For every
+   `<enclosure url="https://curator.sstools.co/downloads/Curator-X.Y.Z.dmg" …>` in
+   `appcast.xml`, make sure `downloads/Curator-X.Y.Z.dmg` exists on the server. The file comes
+   from `https://github.com/brennanMKE/Curator/releases/download/vX.Y.Z/Curator-X.Y.Z.dmg`,
+   with `Curator-X.Y.Z.dmg.sha256` beside it to check against.
+3. **Use the file as downloaded.** The appcast's `length` and `sparkle:edSignature` were
+   computed from exactly that file. Don't re-compress, rename or re-sign it. A quick check is
+   that the file size equals the enclosure's `length`.
+4. **Never delete older DMGs** from `downloads/`. Installed copies and old links may still
+   point at them.
+5. **Don't cache `appcast.xml` for long.** Sparkle reads it to find updates, so a stale copy
+   delays them.
+
+A release is only complete on GitHub before it's deployed: the DMG must exist there first.
+The DMGs never go in git: `website/downloads/*.dmg` is ignored, and the folder holds only a
+`.gitkeep`.

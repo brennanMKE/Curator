@@ -24,9 +24,10 @@ profiles, and don't change signing settings in the project. Build unsigned
 ## Releases
 
 Version lives only in `Config/App.xcconfig`. Release notes come from `CHANGELOG.md`. The flow
-is preflight → release (notarizes) → update-website → tag-release --push → publish-release →
-deploy-website; see docs/releasing.md. Those steps reach Apple, GitHub and the web host, so run
-them only when the user asks. The Sparkle private key is `~/.sparkle/Curator.key`: never print,
+is preflight → release (notarizes) → update-website → tag-release --push → publish-release;
+see docs/releasing.md. Those steps reach Apple and GitHub, so run them only when the user asks.
+Deploying the website is another agent's job: this repo only updates `website/`, and DMGs
+reach the server from GitHub releases, never from git. The Sparkle private key is `~/.sparkle/Curator.key`: never print,
 move or regenerate it, since installed copies trust only its public half.
 
 ## Secrets

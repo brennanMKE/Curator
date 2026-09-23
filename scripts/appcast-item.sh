@@ -3,7 +3,7 @@
 # (never typed by hand), and the EdDSA signature comes from the key file, not the Keychain.
 # Adapted from Batty's scripts/appcast-item.sh.
 #
-# Usage: scripts/appcast-item.sh website/downloads/Curator-X.Y.Z.dmg
+# Usage: scripts/appcast-item.sh dist/Curator-X.Y.Z.dmg
 #
 # SPARKLE_KEY_FILE overrides the key location (default ~/.sparkle/Curator.key).
 

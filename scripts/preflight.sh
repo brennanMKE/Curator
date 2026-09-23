@@ -100,11 +100,6 @@ else
     fail "no Sparkle key at $SPARKLE_KEY (see docs/releasing.md)"
 fi
 xmllint --noout "$REPO_ROOT/website/appcast.xml" 2>/dev/null && pass "website/appcast.xml is valid XML" || fail "website/appcast.xml isn't valid XML"
-if [[ -n "${CURATOR_WEB_HOST:-}" && -n "${CURATOR_WEB_PATH:-}" ]]; then
-    pass "deploy target $CURATOR_WEB_HOST:$CURATOR_WEB_PATH"
-else
-    warn "CURATOR_WEB_HOST / CURATOR_WEB_PATH not set; scripts/deploy-website.sh will need them"
-fi
 
 # --- GitHub ------------------------------------------------------------------
 

@@ -1,7 +1,11 @@
 #!/usr/bin/env zsh
-# Adds a release to website/: copies the DMG into downloads/, prepends its signed Sparkle item
-# to appcast.xml, rebuilds changelog.html from CHANGELOG.md, and points the download button at
-# the new DMG. Run after scripts/release.sh; then commit and run scripts/deploy-website.sh.
+# Adds a release to website/: prepends its signed Sparkle item to appcast.xml, rebuilds
+# changelog.html from CHANGELOG.md, and points the download button at the new DMG.
+# Run after scripts/release.sh, then commit website/.
+#
+# The DMG itself isn't copied here. It's attached to the GitHub release, and whoever deploys
+# the site puts it in downloads/ from there (see website/README.md). The Sparkle signature is
+# made from dist/Curator-X.Y.Z.dmg, the same file publish-release.sh attaches, so it matches.
 #
 # Usage: scripts/update-website.sh [X.Y.Z]   (defaults to MARKETING_VERSION)
 
@@ -17,13 +21,10 @@ fail() { print -u2 -r -- "error: $*"; exit 1; }
 xcrun stapler validate "$DMG" >/dev/null 2>&1 || fail "$DMG isn't notarized and stapled"
 grep -q "<sparkle:shortVersionString>$VERSION<" "$SITE_DIR/appcast.xml" && fail "appcast.xml already has $VERSION"
 
-print "==> Copying the DMG to website/downloads/"
-cp "$DMG" "$SITE_DIR/downloads/Curator-$VERSION.dmg"
-
 print "==> Signing and adding the appcast item"
 ITEM_FILE="$(mktemp)"
 trap 'rm -f "$ITEM_FILE"' EXIT
-"$REPO_ROOT/scripts/appcast-item.sh" "$SITE_DIR/downloads/Curator-$VERSION.dmg" > "$ITEM_FILE"
+"$REPO_ROOT/scripts/appcast-item.sh" "$DMG" > "$ITEM_FILE"
 
 /usr/bin/python3 - "$SITE_DIR" "$REPO_ROOT/CHANGELOG.md" "$VERSION" "$ITEM_FILE" <<'PY'
 import html, re, sys, pathlib
@@ -79,4 +80,4 @@ template = (site / "src" / "changelog.template.html").read_text()
 PY
 
 xmllint --noout "$SITE_DIR/appcast.xml" || fail "appcast.xml isn't valid XML"
-print "==> website/ updated for $VERSION. Review, commit, then run scripts/deploy-website.sh"
+print "==> website/ updated for $VERSION. Review and commit it."

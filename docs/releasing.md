@@ -1,8 +1,8 @@
 # Releasing Curator
 
-Each release is notarized, published on GitHub with the DMG attached, and published on
-[curator.sstools.co](https://curator.sstools.co/) with a signed Sparkle feed entry, so
-installed copies update themselves. The scripts are modelled on Batty's (`../Batty/scripts/`),
+Each release is notarized and published on GitHub with the DMG attached. It also gets a
+signed Sparkle feed entry in `website/`, and once the site is deployed to
+[curator.sstools.co](https://curator.sstools.co/), installed copies update themselves. The scripts are modelled on Batty's (`../Batty/scripts/`),
 without Batty's embedded binaries and beta scheme.
 
 ## Once per Mac: credentials
@@ -13,7 +13,6 @@ without Batty's embedded binaries and beta scheme.
 | App Store Connect API key `AuthKey_DWLP54ACTJ.p8` | `~/.appstoreconnect/`, mode 600 | notarizing |
 | Sparkle EdDSA private key | `~/.sparkle/Curator.key`, mode 600 | signing updates |
 | `gh` signed in | `gh auth login` | GitHub releases |
-| `CURATOR_WEB_HOST`, `CURATOR_WEB_PATH` | environment | uploading the website |
 
 `scripts/preflight.sh --credentials-only` checks the signing, notary and GitHub rows.
 
@@ -40,15 +39,18 @@ Moving credentials between Macs works like Batty's: see Batty's
 4. **Build:** `scripts/release.sh`. It runs preflight, builds and signs with Developer ID,
    checks the version, notarizes, staples and runs `scripts/verify-dmg.sh`. The result is
    `dist/Curator-X.Y.Z.dmg` plus `.sha256`.
-5. **Website:** `scripts/update-website.sh`. It copies the DMG to `website/downloads/`, signs it
-   and adds its Sparkle item to `appcast.xml`, rebuilds `changelog.html`, and points the
-   download button at the new DMG. Commit `website/`.
+5. **Website:** `scripts/update-website.sh`. It signs `dist/Curator-X.Y.Z.dmg` with the
+   Sparkle key, adds its item to `appcast.xml`, rebuilds `changelog.html`, and points the
+   download button at the new DMG. It doesn't copy the DMG. Commit `website/`.
 6. **Tag:** `scripts/tag-release.sh --push` pushes `main` and `vX.Y.Z`.
-7. **GitHub:** `scripts/publish-release.sh`, with `--draft` to review first.
-8. **Go live:** `scripts/deploy-website.sh`. It uploads the site, and from then on installed
-   copies see the update. Use `--dry-run` to check what will change first.
+7. **GitHub:** `scripts/publish-release.sh` attaches the same DMG and its `.sha256`. Add
+   `--draft` to review first.
 
-Steps 4 to 8 reach Apple, GitHub and the web host, so a person runs them.
+Steps 4 to 7 reach Apple and GitHub, so a person runs them.
+
+**Deploying the site is handled by a separate agent.** It uploads `website/` and fills
+`downloads/` with each release's DMG from GitHub; see `website/README.md` for what it must do.
+Installed copies see an update once the deployed `appcast.xml` lists it.
 
 ## Checking a DMG
 
