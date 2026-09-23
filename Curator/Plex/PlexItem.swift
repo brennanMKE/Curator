@@ -6,6 +6,8 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
     let ratingKey: String
     let type: String
     let title: String
+    /// Plex's sort title ("Big Lebowski" for "The Big Lebowski"); nil when it's the title itself.
+    let titleSort: String?
     let year: Int?
     let summary: String?
     let tagline: String?
@@ -76,7 +78,7 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case ratingKey, type, title, year, summary, tagline, contentRating, audienceRating, duration
+        case ratingKey, type, title, titleSort, year, summary, tagline, contentRating, audienceRating, duration
         case addedAt, originallyAvailableAt, thumb, art, librarySectionID
         case grandparentTitle, grandparentThumb, grandparentArt, parentIndex, index
         case reason, reasonTitle
@@ -92,6 +94,7 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
         ratingKey = try c.decode(String.self, forKey: .ratingKey)
         type = try c.decode(String.self, forKey: .type)
         title = try c.decodeIfPresent(String.self, forKey: .title) ?? ""
+        titleSort = try c.decodeIfPresent(String.self, forKey: .titleSort)
         year = try c.decodeIfPresent(Int.self, forKey: .year)
         summary = try c.decodeIfPresent(String.self, forKey: .summary)
         tagline = try c.decodeIfPresent(String.self, forKey: .tagline)

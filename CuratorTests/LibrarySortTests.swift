@@ -43,4 +43,42 @@ struct LibrarySortTests {
         #expect(Format.releaseDate(date).contains("1980"))
         #expect(Format.releaseDate(date).contains("16"))
     }
+
+    private func item(_ key: String, _ title: String, titleSort: String? = nil, rating: Double? = nil, released: String? = nil) throws -> PlexItem {
+        var fields = [#""ratingKey":"\#(key)""#, #""type":"movie""#, #""title":"\#(title)""#]
+        if let titleSort { fields.append(#""titleSort":"\#(titleSort)""#) }
+        if let rating { fields.append(#""audienceRating":\#(rating)"#) }
+        if let released { fields.append(#""originallyAvailableAt":"\#(released)""#) }
+        return try JSONDecoder().decode(PlexItem.self, from: Data("{\(fields.joined(separator: ","))}".utf8))
+    }
+
+    @Test func titleSortIgnoresLeadingArticlesLikePlex() throws {
+        let items = [
+            try item("1", "The Big Lebowski", titleSort: "Big Lebowski"),
+            try item("2", "Army of Darkness"),
+            try item("3", "The Adjustment Bureau", titleSort: "Adjustment Bureau"),
+        ]
+        #expect(LibrarySort.default.sorted(items).map(\.id) == ["3", "2", "1"])
+        #expect(LibrarySort(field: .title, ascending: false).sorted(items).map(\.id) == ["1", "2", "3"])
+    }
+
+    @Test func missingValuesGoLastEitherWay() throws {
+        let items = [
+            try item("unrated", "A"),
+            try item("low", "B", rating: 6.1),
+            try item("high", "C", rating: 9.3),
+        ]
+        #expect(LibrarySort(field: .rating, ascending: false).sorted(items).map(\.id) == ["high", "low", "unrated"])
+        #expect(LibrarySort(field: .rating, ascending: true).sorted(items).map(\.id) == ["low", "high", "unrated"])
+    }
+
+    @Test func releaseDateOrderAndStableTies() throws {
+        let items = [
+            try item("a", "A", released: "1996-03-22"),
+            try item("b", "B", released: "1998-03-06"),
+            try item("c", "C", released: "1996-03-22"),
+        ]
+        #expect(LibrarySort(field: .releaseDate, ascending: true).sorted(items).map(\.id) == ["a", "c", "b"])
+        #expect(LibrarySort(field: .releaseDate, ascending: false).sorted(items).map(\.id) == ["b", "a", "c"])
+    }
 }

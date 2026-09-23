@@ -146,6 +146,28 @@ final class CuratorUITests: XCTestCase {
         chooseSort(app, "Title")   // leave the remembered sort as it was
     }
 
+    /// Search results can be sorted with the same Sort menu.
+    @MainActor
+    func testSortingSearchResultsByReleaseDate() throws {
+        let app = try launchWithPlex()
+        XCTAssertTrue(app.buttons.matching(identifier: "poster").firstMatch.waitForExistence(timeout: 30))
+        app.typeKey("f", modifierFlags: .command)
+        app.typeText("the")
+        XCTAssertTrue(app.staticTexts["Titles"].waitForExistence(timeout: 15), "no title matches for \"the\"")
+
+        chooseSort(app, "Release Date")
+        chooseSort(app, "Oldest First")
+        let oldestFirst = try years(ofFirst: 4, in: app)
+        XCTAssertGreaterThanOrEqual(oldestFirst.count, 2)
+        XCTAssertEqual(oldestFirst, oldestFirst.sorted(), "search results not oldest first: \(oldestFirst)")
+
+        chooseSort(app, "Newest First")
+        let newestFirst = try years(ofFirst: 4, in: app)
+        XCTAssertEqual(newestFirst, newestFirst.sorted(by: >), "search results not newest first: \(newestFirst)")
+
+        chooseSort(app, "Title")
+    }
+
     /// Reproduces the 0.0.1 crash: resizing the window while the poster grid and inspector are
     /// showing threw `_postWindowNeedsUpdateConstraints` inside AppKit's layout pass.
     @MainActor

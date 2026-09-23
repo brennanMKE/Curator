@@ -54,6 +54,46 @@ nonisolated struct LibrarySort: Sendable, Hashable {
     /// Stored in UserDefaults as `field:asc` / `field:desc`.
     var storageValue: String { "\(field.rawValue):\(ascending ? "asc" : "desc")" }
 
+    /// Sorts items in the app, the way Plex sorts a library: for search results, which are
+    /// merged from several requests. Items missing the value (no rating, no date) go last in
+    /// either direction; ties keep their original order.
+    func sorted(_ items: [PlexItem]) -> [PlexItem] {
+        let keyed = items.enumerated().map { (offset: $0.offset, item: $0.element, key: key(for: $0.element)) }
+        return keyed.sorted { a, b in
+            switch (a.key, b.key) {
+            case (nil, nil): return a.offset < b.offset
+            case (nil, _): return false
+            case (_, nil): return true
+            case let (x?, y?):
+                if x == y { return a.offset < b.offset }
+                return ascending ? x < y : x > y
+            }
+        }
+        .map(\.item)
+    }
+
+    private enum Key: Comparable {
+        case text(String)
+        case number(Double)
+
+        static func < (lhs: Key, rhs: Key) -> Bool {
+            switch (lhs, rhs) {
+            case let (.text(a), .text(b)): a.localizedStandardCompare(b) == .orderedAscending
+            case let (.number(a), .number(b)): a < b
+            default: false
+            }
+        }
+    }
+
+    private func key(for item: PlexItem) -> Key? {
+        switch field {
+        case .title: .text(item.titleSort ?? item.displayTitle)
+        case .releaseDate: item.releaseDate.map { .number($0.timeIntervalSince1970) }
+        case .dateAdded: item.addedAt.map { .number($0.timeIntervalSince1970) }
+        case .rating: item.audienceRating.map { .number($0) }
+        }
+    }
+
     init(field: Field, ascending: Bool) {
         self.field = field
         self.ascending = ascending
