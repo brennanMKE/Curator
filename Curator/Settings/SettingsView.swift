@@ -85,7 +85,7 @@ private struct TokenHelp: View {
     let tokenCommand: String
 
     var body: some View {
-        DisclosureGroup("How do I find my token?") {
+        HelpDisclosure("How do I find my token?") {
             VStack(alignment: .leading, spacing: 8) {
                 Step(1) {
                     HStack(spacing: 4) {
@@ -122,7 +122,7 @@ private struct TokenHelp: View {
 /// How to get a free TMDB key; artwork works without one.
 private struct TMDBHelp: View {
     var body: some View {
-        DisclosureGroup("Posters come from Plex without a key. How do I get one?") {
+        HelpDisclosure("Posters come from Plex without a key. How do I get one?") {
             VStack(alignment: .leading, spacing: 8) {
                 Step(1) {
                     HStack(spacing: 4) {
@@ -141,6 +141,30 @@ private struct TMDBHelp: View {
             }
             .font(.callout)
             .padding(.top, 4)
+        }
+    }
+}
+
+/// A disclosure whose title is clickable too. A plain `DisclosureGroup` on macOS only
+/// toggles from its small triangle, and people click the words.
+private struct HelpDisclosure<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+    @State private var isExpanded = false
+
+    init(_ title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            content
+        } label: {
+            Button(title) {
+                withAnimation { isExpanded.toggle() }
+            }
+            .buttonStyle(.plain)
         }
     }
 }

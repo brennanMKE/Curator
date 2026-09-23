@@ -27,14 +27,11 @@ final class CuratorUITests: XCTestCase {
         let settings = app.windows["Curator Settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: 10))
 
-        let help = settings.disclosureTriangles["How do I find my token?"]
+        // Clicking the words opens the help, as a person would.
+        let help = settings.buttons["How do I find my token?"]
         XCTAssertTrue(help.waitForExistence(timeout: 5), "token help missing")
-        // Click the triangle itself, at the row's leading edge; a click on the label's middle
-        // can land on the window first and leave the group collapsed.
-        help.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.5)).click()
-        let expanded = NSPredicate(format: "value == 1")
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: expanded, evaluatedWith: help)], timeout: 5), .completed, "token help didn't expand")
-        XCTAssertTrue(text(containing: "View XML", in: settings).waitForExistence(timeout: 5))
+        help.click()
+        XCTAssertTrue(text(containing: "View XML", in: settings).waitForExistence(timeout: 5), "token help didn't open")
         XCTAssertTrue(text(containing: "X-Plex-Token", in: settings).exists)
     }
 
@@ -66,12 +63,14 @@ final class CuratorUITests: XCTestCase {
         try XCTSkipIf(posters.count < 2, "need two titles to move between")
 
         posters.firstMatch.click()
+        // On macOS a text's contents are its accessibility value, not its label.
         let title = app.staticTexts["detailTitle"]
         XCTAssertTrue(title.waitForExistence(timeout: 10))
-        let first = title.label
+        let first = title.value as? String ?? ""
+        XCTAssertFalse(first.isEmpty)
 
         app.typeKey(.rightArrow, modifierFlags: [])
-        let moved = NSPredicate(format: "label != %@", first)
+        let moved = NSPredicate(format: "value != %@", first)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: moved, evaluatedWith: title)], timeout: 10), .completed)
 
         app.typeKey(.space, modifierFlags: [])
