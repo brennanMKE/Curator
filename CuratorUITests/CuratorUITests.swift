@@ -66,8 +66,8 @@ final class CuratorUITests: XCTestCase {
         XCTAssertLessThanOrEqual(rows.count, 5)
         // The list must not spill over the header or the footer: every visible row sits below
         // the refresh button and above the footer's buttons.
-        let top = window.buttons["Refresh"].frame.maxY
-        let bottom = window.buttons["Open Curator"].frame.minY
+        let top = app.buttons["menuBarRefresh"].frame.maxY
+        let bottom = app.buttons["menuBarOpen"].frame.minY
         for index in 0..<rows.count where rows.element(boundBy: index).isHittable {
             let frame = rows.element(boundBy: index).frame
             XCTAssertGreaterThanOrEqual(frame.minY, top, "row \(index) overlaps the header")

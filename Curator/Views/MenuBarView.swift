@@ -56,6 +56,7 @@ struct MenuBarView: View {
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
             .help("Refresh")
+            .accessibilityIdentifier("menuBarRefresh")
             .disabled(!settings.isPlexConfigured || library.status == .connecting || recent.isLoading)
         }
         .padding(12)
@@ -94,6 +95,7 @@ struct MenuBarView: View {
         HStack(spacing: 14) {
             Button("Open Curator", systemImage: "macwindow") { openMainWindow() }
                 .help("Open Curator")
+                .accessibilityIdentifier("menuBarOpen")
             Spacer()
             SettingsLink {
                 Label("Settings…", systemImage: "gearshape")
