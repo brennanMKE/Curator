@@ -101,7 +101,8 @@ BUST_BOTTOM = 550
 
 
 def write_icon_layer(paths):
-    """White robot centred on a 1024-point Icon Composer canvas."""
+    """Robot centred on a 1024-point Icon Composer canvas. The fill here is a placeholder:
+    icon.json colours the layer (Plex gold on charcoal)."""
     box = union([b for _, b in paths])
     target_height = 700
     scale = target_height / (box[3] - box[1])

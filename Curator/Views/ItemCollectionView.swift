@@ -307,7 +307,8 @@ struct NewBadge: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(.tint, in: .capsule)
-            .foregroundStyle(.white)
+            // Near-black on Plex gold, as Plex does; white on gold is too faint.
+            .foregroundStyle(Color(white: 0.1))
     }
 }
 

@@ -1,11 +1,14 @@
 {
   "fill" : {
-    "automatic-gradient" : "srgb:0.52157,0.15686,0.30588,1.00000"
+    "automatic-gradient" : "srgb:0.17255,0.17255,0.18431,1.00000"
   },
   "groups" : [
     {
       "layers" : [
         {
+          "fill" : {
+            "solid" : "srgb:0.89804,0.62745,0.05098,1.00000"
+          },
           "glass" : true,
           "image-name" : "Curator.svg",
           "name" : "Curator",
