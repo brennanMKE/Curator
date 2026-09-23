@@ -78,6 +78,7 @@ private struct PosterGridView: View {
                                     PosterCard(item: item, subtitle: subtitle(item), isNew: isNew(item), isSelected: selection?.id == item.id)
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityIdentifier("poster")
                                 .contextMenu { ItemContextMenu(item: item) }
                                 .onAppear {
                                     if item.id == sections.last?.items.last?.id { onReachEnd?() }

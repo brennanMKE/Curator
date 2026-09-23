@@ -52,6 +52,24 @@ final class AppModel {
         validateTMDB(after: .zero)
     }
 
+    /// The app's model. In Debug builds, UI tests launch with `CURATOR_UI_TEST=1` to get
+    /// throwaway settings seeded from `CURATOR_PLEX_URL`, `CURATOR_PLEX_TOKEN` and
+    /// `CURATOR_TMDB_API_KEY`, so a test run never reads or writes the real settings.
+    static func forLaunch() -> AppModel {
+        #if DEBUG
+        let environment = ProcessInfo.processInfo.environment
+        if environment["CURATOR_UI_TEST"] == "1" {
+            let file = FileManager.default.temporaryDirectory.appending(path: "curator-ui-test-\(UUID().uuidString).env")
+            let settings = SettingsStore(fileURL: file)
+            settings.serverAddress = environment["CURATOR_PLEX_URL"] ?? ""
+            settings.plexToken = environment["CURATOR_PLEX_TOKEN"] ?? ""
+            settings.tmdbKey = environment["CURATOR_TMDB_API_KEY"] ?? ""
+            return AppModel(settings: settings)
+        }
+        #endif
+        return AppModel()
+    }
+
     /// Only while connected: stores treat `nil` as "nothing to load yet".
     var plexContext: PlexContext? {
         guard library.status == .connected, let client = settings.plexClient else { return nil }

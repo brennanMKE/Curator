@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct CuratorApp: App {
-    @State private var model = AppModel()
+    @State private var model = AppModel.forLaunch()
     @State private var artwork = ArtworkLoader()
     @State private var navigation = AppNavigation()
 

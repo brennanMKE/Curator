@@ -50,6 +50,7 @@ struct ItemDetailView: View {
             Text(shown.displayTitle)
                 .font(.title2.bold())
                 .textSelection(.enabled)
+                .accessibilityIdentifier("detailTitle")
             if shown.kind == .episode, let subtitle = shown.displaySubtitle {
                 Text(subtitle).font(.headline)
             }

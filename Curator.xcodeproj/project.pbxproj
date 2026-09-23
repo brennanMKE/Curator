@@ -14,6 +14,13 @@
 			remoteGlobalIDString = C0A000000000000000000010;
 			remoteInfo = Curator;
 		};
+		C0A0000000000000000000A0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C0A000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C0A000000000000000000010;
+			remoteInfo = Curator;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +28,7 @@
 		C0A000000000000000000031 /* CuratorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CuratorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0A000000000000000000050 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C0A000000000000000000051 /* PLAN.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PLAN.md; sourceTree = "<group>"; };
+		C0A0000000000000000000A1 /* CuratorUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CuratorUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +40,11 @@
 		C0A000000000000000000032 /* CuratorTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = CuratorTests;
+			sourceTree = "<group>";
+		};
+		C0A0000000000000000000A2 /* CuratorUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CuratorUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -51,6 +64,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C0A0000000000000000000A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -61,6 +81,7 @@
 				C0A000000000000000000052 /* Config */,
 				C0A000000000000000000012 /* Curator */,
 				C0A000000000000000000032 /* CuratorTests */,
+				C0A0000000000000000000A2 /* CuratorUITests */,
 				C0A000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +91,7 @@
 			children = (
 				C0A000000000000000000011 /* Curator.app */,
 				C0A000000000000000000031 /* CuratorTests.xctest */,
+				C0A0000000000000000000A1 /* CuratorUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -130,6 +152,30 @@
 			productReference = C0A000000000000000000031 /* CuratorTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		C0A0000000000000000000A6 /* CuratorUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0A0000000000000000000A9 /* Build configuration list for PBXNativeTarget "CuratorUITests" */;
+			buildPhases = (
+				C0A0000000000000000000A7 /* Refuse to build on a host Mac */,
+				C0A0000000000000000000A3 /* Sources */,
+				C0A0000000000000000000A4 /* Frameworks */,
+				C0A0000000000000000000A5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C0A0000000000000000000A8 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C0A0000000000000000000A2 /* CuratorUITests */,
+			);
+			name = CuratorUITests;
+			packageProductDependencies = (
+			);
+			productName = CuratorUITests;
+			productReference = C0A0000000000000000000A1 /* CuratorUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -144,6 +190,10 @@
 						CreatedOnToolsVersion = 27.0;
 					};
 					C0A000000000000000000030 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = C0A000000000000000000010;
+					};
+					C0A0000000000000000000A6 = {
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = C0A000000000000000000010;
 					};
@@ -165,6 +215,7 @@
 			targets = (
 				C0A000000000000000000010 /* Curator */,
 				C0A000000000000000000030 /* CuratorTests */,
+				C0A0000000000000000000A6 /* CuratorUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -184,7 +235,36 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C0A0000000000000000000A5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C0A0000000000000000000A7 /* Refuse to build on a host Mac */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Refuse to build on a host Mac";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# UI tests load XCTAutomationSupport into every running GUI app; on a host\n# Mac that has crashed other apps (see docs/ui-testing-vm.md). They are\n# built and run only inside a Tart guest, via scripts/run-ui-tests-vm.sh.\nif [ \"$(sysctl -n kern.hv_vmm_present 2>/dev/null)\" != \"1\" ]; then\n  echo \"error: CuratorUITests only build inside a VM. Run scripts/run-ui-tests-vm.sh.\"\n  exit 1\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		C0A000000000000000000013 /* Sources */ = {
@@ -201,6 +281,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C0A0000000000000000000A3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -208,6 +295,11 @@
 			isa = PBXTargetDependency;
 			target = C0A000000000000000000010 /* Curator */;
 			targetProxy = C0A000000000000000000020 /* PBXContainerItemProxy */;
+		};
+		C0A0000000000000000000A8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C0A000000000000000000010 /* Curator */;
+			targetProxy = C0A0000000000000000000A0 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -373,6 +465,46 @@
 			};
 			name = Release;
 		};
+		C0A0000000000000000000AA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XV8BAAVZ6V;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = co.sstools.CuratorUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = Curator;
+			};
+			name = Debug;
+		};
+		C0A0000000000000000000AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XV8BAAVZ6V;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = co.sstools.CuratorUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = Curator;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -399,6 +531,15 @@
 			buildConfigurations = (
 				C0A000000000000000000065 /* Debug */,
 				C0A000000000000000000066 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C0A0000000000000000000A9 /* Build configuration list for PBXNativeTarget "CuratorUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0A0000000000000000000AA /* Debug */,
+				C0A0000000000000000000AB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
