@@ -132,19 +132,23 @@ if (( OFFLINE )); then
   log "Offline run: no Plex values are passed; live tests will skip"
 elif [[ -f "$REPO/.env" ]]; then
   plex_url="$(env_value PLEX_URL)"
-  # The guest can't resolve names like "joe"; hand it the IP the host resolves.
-  if [[ -n "$plex_url" ]]; then
+  plex_token="$(env_value PLEX_TOKEN)"
+  # The guest can't use the host's name resolution (on cameron, "joe" resolves to a Tailscale
+  # address the guest can't reach). Ask Plex for its own LAN address instead.
+  if [[ -n "$plex_url" && -n "$plex_token" ]]; then
+    [[ "$plex_url" == *://* ]] || plex_url="http://$plex_url"
     host="$(print -r -- "$plex_url" | sed -E 's#^[a-z]+://##; s#[:/].*$##')"
-    if [[ ! "$host" =~ '^[0-9.]+$' ]]; then
-      ip="$(dscacheutil -q host -a name "$host" | awk '/^ip_address/ { print $2; exit }')"
-      [[ -n "$ip" ]] || fail "Couldn't resolve $host for the guest"
-      plex_url="${plex_url/$host/$ip}"
-      log "Plex server $host → $ip for the guest"
+    lan="$(curl -s -m 8 -H 'Accept: application/json' -H "X-Plex-Token: $plex_token" "$plex_url/servers" \
+      | /usr/bin/python3 -c 'import json,sys; s=json.load(sys.stdin)["MediaContainer"].get("Server",[]); print(s[0]["address"] if s else "")' 2>/dev/null || true)"
+    if [[ -n "$lan" && "$lan" != "$host" ]]; then
+      plex_url="${plex_url/$host/$lan}"
+      log "Plex server $host → $lan (its LAN address) for the guest"
     fi
+    [[ "$plex_url" =~ ':[0-9]+' ]] || plex_url="$plex_url:32400"
   fi
   {
     print -r -- "export TEST_RUNNER_CURATOR_PLEX_URL=${(q)plex_url}"
-    print -r -- "export TEST_RUNNER_CURATOR_PLEX_TOKEN=${(q)$(env_value PLEX_TOKEN)}"
+    print -r -- "export TEST_RUNNER_CURATOR_PLEX_TOKEN=${(q)plex_token}"
     print -r -- "export TEST_RUNNER_CURATOR_TMDB_API_KEY=${(q)$(env_value TMDB_API_KEY)}"
   } > "$EXPORT/uitest.env"
 else
@@ -170,6 +174,12 @@ log "Guest reachable after $SECONDS s"
 tart exec "$CLONE" /bin/zsh -lc "rm -rf $GUEST_SRC $GUEST_RESULTS && mkdir -p $GUEST_RESULTS"
 log "Copying source into the guest"
 tart exec "$CLONE" /bin/zsh -lc "cp -R '/Volumes/My Shared Files/run/src' $GUEST_SRC"
+
+if [[ -n "${plex_url:-}" ]] && (( ! OFFLINE )); then
+  code=$(tart exec "$CLONE" /usr/bin/curl -s -m 8 -o /dev/null -w '%{http_code}' "$plex_url/identity" || true)
+  [[ "$code" == "200" ]] || fail "The guest can't reach Plex at $plex_url (HTTP ${code:-none}). Use --offline, or fix the network."
+  log "Guest reaches Plex at $plex_url"
+fi
 
 log "Running UI tests in the guest"
 set +e

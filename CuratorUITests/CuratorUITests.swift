@@ -29,7 +29,11 @@ final class CuratorUITests: XCTestCase {
 
         let help = settings.disclosureTriangles["How do I find my token?"]
         XCTAssertTrue(help.waitForExistence(timeout: 5), "token help missing")
-        help.click()
+        // Click the triangle itself, at the row's leading edge; a click on the label's middle
+        // can land on the window first and leave the group collapsed.
+        help.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.5)).click()
+        let expanded = NSPredicate(format: "value == 1")
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: expanded, evaluatedWith: help)], timeout: 5), .completed, "token help didn't expand")
         XCTAssertTrue(text(containing: "View XML", in: settings).waitForExistence(timeout: 5))
         XCTAssertTrue(text(containing: "X-Plex-Token", in: settings).exists)
     }
