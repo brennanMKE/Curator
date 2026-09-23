@@ -101,7 +101,12 @@ What the script does, in order:
 6. **Build and test** in the guest:
    `xcodebuild -scheme 'Curator UI Tests' test CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=`.
    The guest has no certificates, so the build uses ad hoc signing.
-7. **Results** are streamed back with `tart exec … tar`, not through the read-only share.
+7. **Results** are streamed back with `tart exec … tar`, not through the read-only share. They
+   include `app-warnings.log`, the app's errors, faults and SwiftUI/AttributeGraph messages
+   from the run, and `crashes/` with any Curator crash report. The script prints a count of
+   SwiftUI and AppKit state-flow warnings, such as "Modifying state during view update",
+   "multiple times per frame" or AttributeGraph cycles. Anything above 0 is a bug to fix,
+   not noise.
 8. **Cleanup** on exit: the clone is stopped and deleted, and the export, which holds the
    token, is removed.
 
@@ -141,6 +146,9 @@ Accessibility identifiers the tests use: `poster` (each poster in the grid) and
 | `testRecentlyAddedShowsPostersAndDetails` | yes | Posters load; clicking one fills the inspector and shows Open in Plex |
 | `testArrowKeysMoveSelectionAndSpacePreviews` | yes | → changes the selected title; Space opens the preview; Escape closes it |
 | `testSearchShowsNoResultsForAnUnknownTitle` | yes | ⌘F, typing, and the No Results state |
+| `testMenuBarWindowShowsItsControls` | no | The status item opens the panel with Open Curator, Settings and Quit (screenshot kept) |
+| `testMenuBarWindowListsTheLatestImports` | yes | At most 5 rows, none overlapping the header or footer (screenshot kept) |
+| `testResizingTheWindowKeepsTheAppRunning` | yes | Six slow corner drags with the inspector open; each must really resize the window and the app must keep running (the 0.0.1 crash) |
 
 Live tests skip themselves when no Plex values are passed.
 
@@ -165,6 +173,19 @@ Live tests skip themselves when no Plex values are passed.
   Both bugs above were found this way, not by guessing.
 - Harmless log noise: `[DisplayManager] Could not find any displays containing rect (inf, inf, 0.0, 0.0)`.
   The guest is headless.
+
+## The 0.0.1 resize crash
+
+0.0.1 crashed while resizing the window: `EXC_BREAKPOINT` from
+`_postWindowNeedsUpdateConstraints` inside `_NSViewLayout`, reached through a `@State` write
+flushed during layout. The poster grid wrote its width to `@State` from `onGeometryChange`,
+which runs inside AppKit's layout pass. It fired on every resize frame and whenever the
+inspector opened. Fixed in `0af40e0`: the width now lives in an unobserved object.
+
+The VM run before the fix did **not** reproduce the crash; the Debug build on a 1024 × 768
+display survived the resize test. So the resize test guards against a regression but isn't
+proof of this fix. The fix follows the rule that geometry and layout callbacks must not write
+state the view renders from.
 
 ## Verification record, 2026-09-23
 
