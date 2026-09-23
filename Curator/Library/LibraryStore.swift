@@ -67,7 +67,7 @@ final class LibraryStore {
     func refreshCounts(using client: PlexClient) async {
         guard status == .connected else { return }
         let counted = await Self.count(sections, with: client)
-        guard status == .connected, counted.map(\.id) == libraries.map(\.id) else { return }
+        guard status == .connected, counted.map(\.id) == libraries.map(\.id), counted != libraries else { return }
         libraries = counted
     }
 

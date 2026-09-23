@@ -9,18 +9,22 @@ struct RecentlyAddedView: View {
     var body: some View {
         content
             .safeAreaInset(edge: .top, spacing: 0) {
-                if !recent.arrivals.isEmpty {
-                    ArrivalsBanner(arrivals: recent.arrivals) {
-                        scrollToTop += 1
-                        selection = recent.arrivals.first
-                        recent.dismissArrivals()
-                    } dismiss: {
-                        recent.dismissArrivals()
+                // The animation is scoped to the banner; on the whole view it also animated the
+                // grid's layout every time an import arrived.
+                VStack(spacing: 0) {
+                    if !recent.arrivals.isEmpty {
+                        ArrivalsBanner(arrivals: recent.arrivals) {
+                            scrollToTop += 1
+                            selection = recent.arrivals.first
+                            recent.dismissArrivals()
+                        } dismiss: {
+                            recent.dismissArrivals()
+                        }
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
-                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
+                .animation(.default, value: recent.arrivals.isEmpty)
             }
-            .animation(.default, value: recent.arrivals.map(\.id))
             .navigationTitle("Recently Added")
             .navigationSubtitle(subtitle)
     }

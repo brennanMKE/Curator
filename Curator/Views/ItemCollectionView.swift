@@ -57,7 +57,7 @@ private struct PosterGridView: View {
 
     @Environment(\.itemActions) private var actions
     @FocusState private var isFocused: Bool
-    @State private var width: CGFloat = 0
+    @State private var metrics = GridMetrics()
 
     private static let minimum: CGFloat = 140
     private static let spacing: CGFloat = 20
@@ -93,17 +93,16 @@ private struct PosterGridView: View {
                 }
                 .padding(Self.padding)
                 .id("top")
-                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+                // Written from inside AppKit's layout pass, so it must not be observed state: a
+                // @State width here re-rendered the grid on every resize frame and crashed 0.0.1
+                // (_postWindowNeedsUpdateConstraints). Only the arrow-key maths reads it.
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { metrics.width = $0 }
             }
             .focusable()
             .focused($isFocused)
             .focusEffectDisabled()
             .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow, .return, .space]) { press in
-                handle(press.key)
-            }
-            .onChange(of: selection?.id) {
-                guard let id = selection?.id else { return }
-                withAnimation { proxy.scrollTo(id) }
+                handle(press.key, proxy: proxy)
             }
             .onChange(of: scrollToTop) {
                 withAnimation { proxy.scrollTo("top", anchor: .top) }
@@ -111,7 +110,7 @@ private struct PosterGridView: View {
         }
     }
 
-    private func handle(_ key: KeyEquivalent) -> KeyPress.Result {
+    private func handle(_ key: KeyEquivalent, proxy: ScrollViewProxy) -> KeyPress.Result {
         switch key {
         case .return:
             guard let selection else { return .ignored }
@@ -126,11 +125,15 @@ private struct PosterGridView: View {
             case .upArrow: .up
             default: .down
             }
-            let columns = GridNavigation.columns(width: width - 2 * Self.padding, minimum: Self.minimum, spacing: Self.spacing)
+            let columns = GridNavigation.columns(width: metrics.width - 2 * Self.padding, minimum: Self.minimum, spacing: Self.spacing)
             guard let next = GridNavigation.move(from: position(of: selection), direction, counts: sections.map(\.items.count), columns: columns) else {
                 return .handled
             }
-            selection = sections[next.section].items[next.index]
+            let item = sections[next.section].items[next.index]
+            selection = item
+            // Only keyboard moves scroll; a click selects something already on screen, and
+            // scrolling then made the grid jump.
+            proxy.scrollTo(item.id)
         }
         return .handled
     }
@@ -144,6 +147,12 @@ private struct PosterGridView: View {
         }
         return nil
     }
+}
+
+/// The grid's width, for the arrow-key maths only. A plain class held in @State: writing it
+/// doesn't invalidate the view.
+private final class GridMetrics {
+    var width: CGFloat = 0
 }
 
 private struct SectionHeader: View {

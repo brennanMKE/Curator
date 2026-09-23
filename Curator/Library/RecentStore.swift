@@ -89,13 +89,17 @@ final class RecentStore {
             let known = Set(items.map(\.id))
             let newest = items.first?.addedAt ?? .distantPast
             let arrived = fetched.filter { !known.contains($0.id) && ($0.addedAt ?? .distantPast) > newest }
-            arrivals = arrived + arrivals.filter { !arrived.map(\.id).contains($0.id) }
+            if !arrived.isEmpty {
+                arrivals = arrived + arrivals.filter { !arrived.map(\.id).contains($0.id) }
+            }
         }
 
-        items = fetched
-        hasMore = more
-        error = failure
-        hasLoaded = true
+        // Observation notifies on every write, equal values included; the poll runs each
+        // minute, so only write what changed or the whole grid re-renders every minute.
+        if items != fetched { items = fetched }
+        if hasMore != more { hasMore = more }
+        if error != failure { error = failure }
+        if !hasLoaded { hasLoaded = true }
     }
 
     /// Intent from the view when the last item scrolls into sight.

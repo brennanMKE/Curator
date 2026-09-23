@@ -64,9 +64,14 @@ final class CuratorUITests: XCTestCase {
         let rows = window.buttons.matching(identifier: "menuBarRow")
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
         XCTAssertLessThanOrEqual(rows.count, 5)
-        // Every row sits inside the window: the list must not spill over the header or footer.
+        // The list must not spill over the header or the footer: every visible row sits below
+        // the refresh button and above the footer's buttons.
+        let top = window.buttons["Refresh"].frame.maxY
+        let bottom = window.buttons["Open Curator"].frame.minY
         for index in 0..<rows.count where rows.element(boundBy: index).isHittable {
-            XCTAssertTrue(window.frame.contains(rows.element(boundBy: index).frame), "row \(index) spills outside the window")
+            let frame = rows.element(boundBy: index).frame
+            XCTAssertGreaterThanOrEqual(frame.minY, top, "row \(index) overlaps the header")
+            XCTAssertLessThanOrEqual(frame.maxY, bottom, "row \(index) overlaps the footer")
         }
         keepScreenshot(of: window, named: "Menu bar window, connected")
     }
@@ -116,13 +121,16 @@ final class CuratorUITests: XCTestCase {
         posters.firstMatch.click()   // opens the inspector, which narrows the grid
         XCTAssertTrue(app.staticTexts["detailTitle"].waitForExistence(timeout: 10))
 
-        let window = app.windows.element(boundBy: 0)
+        let window = app.windows.matching(identifier: "main").firstMatch
+        XCTAssertTrue(window.exists)
         for (dx, dy) in [(-420.0, -180.0), (380.0, 160.0), (-250.0, 0.0), (300.0, 60.0), (-500.0, -200.0), (500.0, 200.0)] {
+            let before = window.frame.size
             let corner = window.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 1)).withOffset(CGVector(dx: -3, dy: -3))
             // A slow drag, so AppKit runs many live-resize layout passes, like a person resizing.
             corner.press(forDuration: 0.2, thenDragTo: corner.withOffset(CGVector(dx: dx, dy: dy)),
                          withVelocity: .slow, thenHoldForDuration: 0.2)
             XCTAssertEqual(app.state, .runningForeground, "Curator stopped running while resizing")
+            XCTAssertNotEqual(window.frame.size, before, "the drag didn't resize the window")
         }
         XCTAssertTrue(posters.firstMatch.exists)
         XCTAssertTrue(app.staticTexts["detailTitle"].exists)
