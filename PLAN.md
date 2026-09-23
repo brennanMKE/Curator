@@ -83,9 +83,10 @@ Curator/
 
 - macOS 26, Swift 6 language mode, MainActor default isolation, `@Observable`,
   async/await. No dependencies.
-- Signed with **Developer ID Application (XV8BAAVZ6V)**, manual style, hardened runtime.
-  Manual signing never contacts the developer portal. Agents build and test unsigned
-  (`CODE_SIGNING_ALLOWED=NO`); signed builds are run by a person.
+- Signing, as in Batty: builds use **Apple Development** (Automatic, team XV8BAAVZ6V,
+  hardened runtime); **Developer ID Application** is applied when a release is archived
+  and exported. Never `-allowProvisioningUpdates`. Agents build and test unsigned
+  (`CODE_SIGNING_ALLOWED=NO`) unless the user asks for a signed build and is present.
 - Plain HTTP to joe: `NSAllowsLocalNetworking` (ATS), `NSLocalNetworkUsageDescription`,
   sandbox outgoing-network entitlement.
 - Guard against Plex's silent failures: only send known filter fields (a bad field returns
