@@ -1,0 +1,9 @@
+// The single source of truth for Curator's version. Don't set MARKETING_VERSION or
+// CURRENT_PROJECT_VERSION in the project file; scripts/preflight.sh fails if you do.
+//
+// MARKETING_VERSION is what people see (X.Y.Z). CURRENT_PROJECT_VERSION is overridden at
+// release time with the UTC build date and time (scripts/make-dmg.sh), so every release build
+// is newer than the last.
+
+MARKETING_VERSION = 0.0.1
+CURRENT_PROJECT_VERSION = 1

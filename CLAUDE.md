@@ -21,6 +21,13 @@ profiles, and don't change signing settings in the project. Build unsigned
 (`CODE_SIGNING_ALLOWED=NO`) unless the user asks for a signed build and is present.
 `scripts/make-dmg.sh` signs with Developer ID; notarizing is done by a person.
 
+## Releases
+
+Version lives only in `Config/App.xcconfig`. Release notes come from `CHANGELOG.md`. The flow
+is `scripts/preflight.sh` → `scripts/release.sh` (notarizes) → `scripts/tag-release.sh --push` →
+`scripts/publish-release.sh`; see docs/releasing.md. Notarizing and publishing reach Apple and
+GitHub, so run them only when the user asks.
+
 ## Secrets
 
 Settings and secrets live in `.env` files (the app's own in Application Support; the repo's

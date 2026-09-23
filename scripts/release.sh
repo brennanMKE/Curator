@@ -1,23 +1,25 @@
-#!/bin/zsh
-# Builds a notarized Curator DMG for a GitHub release.
+#!/usr/bin/env zsh
+# Build a notarized, stapled, verified Curator DMG for a GitHub release.
+# Modelled on Batty's scripts/release.sh.
 #
-#   scripts/release.sh            build, sign, notarize, staple, verify -> dist/Curator-<version>.dmg
+#   scripts/release.sh     ->  dist/Curator-<version>.dmg and .sha256
 #
-# Tagging, pushing and `gh release create` are separate, deliberate steps (see docs/releasing.md).
-# Notarization uploads the DMG to Apple, so a person starts this script.
+# Steps: preflight -> build and sign with Developer ID (make-dmg.sh) -> check the built
+# version -> notarize -> staple -> verify-dmg.sh -> rename. Tagging and publishing are
+# separate: scripts/tag-release.sh, then scripts/publish-release.sh.
+#
+# Notarizing uploads the DMG to Apple, so a person starts this script.
 #
 # Notary credentials: the App Store Connect API key file, passed straight to notarytool, so
-# nothing is stored in the Keychain. Override with environment variables if needed:
-#   ASC_KEY_PATH   default ~/.appstoreconnect/AuthKey_DWLP54ACTJ.p8
-#   ASC_KEY_ID     default DWLP54ACTJ
-#   ASC_ISSUER     default 69a6de6e-9f19-47e3-e053-5b8c7c11a4d1
-# (the same key Batty uses; see Batty's scripts/RELEASE-CREDENTIALS.md for moving it between Macs)
+# Curator stores nothing in the Keychain. Override with ASC_KEY_PATH / ASC_KEY_ID / ASC_ISSUER,
+# or set NOTARY_PROFILE to use an existing notarytool keychain profile instead.
 
 set -euo pipefail
 
 APP_NAME="Curator"
 REPO_ROOT="${0:A:h:h}"
 DIST_DIR="$REPO_ROOT/dist"
+XCCONFIG="$REPO_ROOT/Config/App.xcconfig"
 ASC_KEY_ID="${ASC_KEY_ID:-DWLP54ACTJ}"
 ASC_ISSUER="${ASC_ISSUER:-69a6de6e-9f19-47e3-e053-5b8c7c11a4d1}"
 ASC_KEY_PATH="${ASC_KEY_PATH:-$HOME/.appstoreconnect/AuthKey_$ASC_KEY_ID.p8}"
@@ -25,56 +27,54 @@ ASC_KEY_PATH="${ASC_KEY_PATH:-$HOME/.appstoreconnect/AuthKey_$ASC_KEY_ID.p8}"
 log()  { print -r -- "==> $*"; }
 fail() { print -u2 -r -- "error: $*"; exit 1; }
 
-# --- Preflight ---------------------------------------------------------------
+log "Preflight"
+"$REPO_ROOT/scripts/preflight.sh" || fail "preflight failed; fix the FAILs above"
 
-[[ -f "$ASC_KEY_PATH" ]] || fail "App Store Connect key not found at $ASC_KEY_PATH (copy it from the Mac that has it; see docs/releasing.md)"
-[[ -z "$(git -C "$REPO_ROOT" status --porcelain)" ]] || fail "working tree has uncommitted changes; release from a clean commit"
+VERSION="$(awk -F= '/^MARKETING_VERSION/ { gsub(/ /, "", $2); print $2 }' "$XCCONFIG")"
+export BUILD_NUMBER="$(date -u +%Y%m%d%H%M)"
+log "Releasing $APP_NAME $VERSION (build $BUILD_NUMBER) from $(git -C "$REPO_ROOT" rev-parse --short HEAD)"
 
-VERSION="$(xcodebuild -project "$REPO_ROOT/$APP_NAME.xcodeproj" -target "$APP_NAME" -configuration Release -showBuildSettings 2>/dev/null \
-    | awk -F' = ' '/^ +MARKETING_VERSION /{print $2; exit}')"
-[[ -n "$VERSION" ]] || fail "couldn't read MARKETING_VERSION"
-if git -C "$REPO_ROOT" rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
-    [[ "$(git -C "$REPO_ROOT" rev-list -n1 "v$VERSION")" == "$(git -C "$REPO_ROOT" rev-parse HEAD)" ]] \
-        || fail "tag v$VERSION already exists on a different commit; bump MARKETING_VERSION"
-fi
-log "Releasing $APP_NAME $VERSION from $(git -C "$REPO_ROOT" rev-parse --short HEAD)"
-
-# --- Build and sign (Developer ID) -------------------------------------------
+# --- Build and sign ----------------------------------------------------------
 
 "$REPO_ROOT/scripts/make-dmg.sh"
 BUILT="$(ls -t "$DIST_DIR"/$APP_NAME-$VERSION-*.dmg | head -1)"
 
-# Notarize under a name equal to the volume name: macOS can rename a DMG whose file name and
-# volume name differ during the notary round trip. Rename to the release name only at the end.
+# Notarize under a file name equal to the volume name: macOS can rename a DMG whose file name
+# and volume name differ during the notary round trip. Rename only at the end.
 WORK_DMG="$DIST_DIR/$APP_NAME.dmg"
 FINAL_DMG="$DIST_DIR/$APP_NAME-$VERSION.dmg"
-rm -f "$WORK_DMG" "$FINAL_DMG"
+rm -f "$WORK_DMG" "$FINAL_DMG" "$FINAL_DMG.sha256"
 mv "$BUILT" "$WORK_DMG"
 
-# --- Notarize, staple, verify ------------------------------------------------
+# --- The built app must carry exactly this version ---------------------------
 
-log "Submitting to Apple's notary service (this can take a few minutes)"
-xcrun notarytool submit "$WORK_DMG" \
-    --key "$ASC_KEY_PATH" --key-id "$ASC_KEY_ID" --issuer "$ASC_ISSUER" \
-    --wait --timeout 30m
+MOUNT="$(hdiutil attach -nobrowse -readonly "$WORK_DMG" | awk -F'\t' '/\/Volumes\// { print $NF }')"
+plist="$MOUNT/$APP_NAME.app/Contents/Info.plist"
+built_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")"
+built_build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$plist")"
+hdiutil detach "$MOUNT" -quiet
+[[ "$built_version" == "$VERSION" ]] || fail "built app says version $built_version, expected $VERSION"
+[[ "$built_build" == "$BUILD_NUMBER" ]] || fail "built app says build $built_build, expected $BUILD_NUMBER"
+log "Built app is $built_version ($built_build)"
+
+# --- Notarize and staple -----------------------------------------------------
+
+log "Submitting to Apple's notary service (usually a few minutes)"
+if [[ -n "${NOTARY_PROFILE:-}" ]]; then
+    xcrun notarytool submit "$WORK_DMG" --keychain-profile "$NOTARY_PROFILE" --wait --timeout 30m
+else
+    xcrun notarytool submit "$WORK_DMG" --key "$ASC_KEY_PATH" --key-id "$ASC_KEY_ID" --issuer "$ASC_ISSUER" \
+        --wait --timeout 30m
+fi
 
 log "Stapling the ticket"
 xcrun stapler staple "$WORK_DMG"
-xcrun stapler validate "$WORK_DMG"
 
-log "Verifying as a downloaded file would be checked"
-spctl -a -t open --context context:primary-signature -vv "$WORK_DMG" 2>&1 | tee /dev/stderr | grep -q "source=Notarized Developer ID" \
-    || fail "Gatekeeper doesn't accept the DMG as notarized"
-
-MOUNT="$(hdiutil attach -nobrowse -readonly "$WORK_DMG" | awk -F'\t' '/\/Volumes\//{print $NF}')"
-trap '[[ -n "${MOUNT:-}" ]] && hdiutil detach "$MOUNT" -quiet || true' EXIT
-spctl -a -t exec -vv "$MOUNT/$APP_NAME.app" 2>&1 | tee /dev/stderr | grep -q "source=Notarized Developer ID" \
-    || fail "Gatekeeper doesn't accept the app inside the DMG as notarized"
-BUNDLE_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$MOUNT/$APP_NAME.app/Contents/Info.plist")"
-[[ "$BUNDLE_VERSION" == "$VERSION" ]] || fail "app says $BUNDLE_VERSION, expected $VERSION"
-hdiutil detach "$MOUNT" -quiet
-MOUNT=""
+log "Verifying"
+"$REPO_ROOT/scripts/verify-dmg.sh" "$WORK_DMG" || fail "verification failed; don't publish this DMG"
 
 mv "$WORK_DMG" "$FINAL_DMG"
+(cd "$DIST_DIR" && shasum -a 256 "${FINAL_DMG:t}" > "${FINAL_DMG:t}.sha256")
 log "Done: $FINAL_DMG"
-shasum -a 256 "$FINAL_DMG"
+cat "$FINAL_DMG.sha256"
+print "Next: scripts/tag-release.sh --push, then scripts/publish-release.sh"

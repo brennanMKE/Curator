@@ -91,6 +91,11 @@ scripts/run-ui-tests-vm.sh            # add --offline to keep Plex values out of
 
 See [docs/ui-testing-vm.md](docs/ui-testing-vm.md).
 
+## Releases
+
+Download the notarized DMG from [GitHub Releases](https://github.com/brennanMKE/Curator/releases).
+To cut a release, see [docs/releasing.md](docs/releasing.md).
+
 ## Installing on another Mac
 
 ```sh
@@ -136,9 +141,10 @@ Curator/            App sources (Plex, TMDB, Library, Settings, Views, Artwork, 
   Assets.xcassets/  Accent color and the curator.bust menu bar symbol
 CuratorTests/       Swift Testing unit tests
 CuratorUITests/     XCUITest UI tests (VM only)
-docs/               ui-testing-vm.md
-Config/Info.plist   Local-network ATS exception
-scripts/            make-dmg.sh, run-ui-tests-vm.sh
+docs/               releasing.md, ui-testing-vm.md
+Config/             App.xcconfig (the version), Info.plist (local-network ATS exception)
+scripts/            preflight, release, verify-dmg, tag-release, publish-release,
+                    make-dmg, run-ui-tests-vm
 Tools/              trace_icon.py (regenerates the icon and symbol from Curator.png)
 ```
 

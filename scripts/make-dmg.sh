@@ -2,9 +2,8 @@
 # Builds a Developer ID-signed Curator.app and packages it in a drag-to-Applications
 # DMG for installing on your own Macs.
 #
-# NOT notarized. Notarization needs the notarytool keychain profile (see Batty's
-# scripts/RELEASE-CREDENTIALS.md) and uploads the app to Apple, so it's left for a
-# person to run. A non-notarized app is fine on your own Macs; see "Installing" below.
+# NOT notarized: scripts/release.sh builds with this script, then notarizes, staples and
+# verifies. A non-notarized DMG is fine on your own Macs; see "Installing" below.
 #
 # Signing: archive with the project's settings (Apple Development, Automatic), then
 # export re-signed with Developer ID using *manual* style, so nothing contacts the
@@ -36,8 +35,9 @@ if ! security find-identity -p codesigning -v | grep -qF "$SIGN_IDENTITY"; then
     exit 1
 fi
 
-# Build number = today's UTC date and time, so every package is newer than the last.
-BUILD_NUMBER="$(date -u +%Y%m%d%H%M)"
+# Build number = UTC date and time, so every package is newer than the last. release.sh passes
+# its own so it can check the built app carries it.
+BUILD_NUMBER="${BUILD_NUMBER:-$(date -u +%Y%m%d%H%M)}"
 GIT_SHA="$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || print unknown)"
 
 print "==> Cleaning $BUILD_DIR"
