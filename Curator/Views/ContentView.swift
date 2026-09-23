@@ -17,8 +17,8 @@ extension FocusedValues {
 struct ContentView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(LibraryStore.self) private var library
-    @Environment(TMDBStore.self) private var tmdb
     @Environment(SearchStore.self) private var search
+    @Environment(AppNavigation.self) private var navigation
     @State private var sidebarSelection: SidebarItem? = .recentlyAdded
     @State private var selectedItem: PlexItem?
     @State private var showInspector = false
@@ -68,21 +68,12 @@ struct ContentView: View {
             search.query = ""
             selectedItem = nil
         }
-        // Reconnect whenever the address or token changes, after typing settles.
-        .task(id: settings.plexConnectionKey) {
-            if library.lastRefreshed != nil || library.status != .notConfigured {
-                try? await Task.sleep(for: .milliseconds(600))
-                guard !Task.isCancelled else { return }
-            }
-            await library.refresh(using: settings)
-        }
-        // Check the TMDB key whenever it changes; artwork falls back to Plex until it's valid.
-        .task(id: settings.tmdbKey.trimmed) {
-            if tmdb.status != .off {
-                try? await Task.sleep(for: .milliseconds(600))
-                guard !Task.isCancelled else { return }
-            }
-            await tmdb.validate(using: settings)
+        .onChange(of: navigation.pendingItem, initial: true) {
+            guard let item = navigation.pendingItem else { return }
+            navigation.pendingItem = nil
+            search.query = ""
+            selectedItem = item
+            showInspector = true
         }
     }
 }

@@ -8,8 +8,6 @@ struct RecentlyAddedView: View {
     @Environment(RecentStore.self) private var recent
     @State private var scrollToTop = 0
 
-    private static let pollInterval: Duration = .seconds(60)
-
     var body: some View {
         content
             .safeAreaInset(edge: .top, spacing: 0) {
@@ -34,17 +32,6 @@ struct RecentlyAddedView: View {
                     }
                     .help("Clear the New badges")
                     .disabled(recent.newCount == 0)
-                }
-            }
-            // Load on connect, then poll so imports show up on their own.
-            .task(id: library.revision) {
-                guard let client = settings.plexClient else { return }
-                await recent.load(client: client, sections: library.sections, reset: !recent.hasLoaded)
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: Self.pollInterval)
-                    guard !Task.isCancelled, let client = settings.plexClient else { return }
-                    await recent.load(client: client, sections: library.sections)
-                    await library.refreshCounts(using: client)
                 }
             }
     }
