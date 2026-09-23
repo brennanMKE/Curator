@@ -106,6 +106,28 @@ final class CuratorUITests: XCTestCase {
         XCTAssertTrue(close.waitForNonExistence(timeout: 10))
     }
 
+    /// Reproduces the 0.0.1 crash: resizing the window while the poster grid and inspector are
+    /// showing threw `_postWindowNeedsUpdateConstraints` inside AppKit's layout pass.
+    @MainActor
+    func testResizingTheWindowKeepsTheAppRunning() throws {
+        let app = try launchWithPlex()
+        let posters = app.buttons.matching(identifier: "poster")
+        XCTAssertTrue(posters.firstMatch.waitForExistence(timeout: 30))
+        posters.firstMatch.click()   // opens the inspector, which narrows the grid
+        XCTAssertTrue(app.staticTexts["detailTitle"].waitForExistence(timeout: 10))
+
+        let window = app.windows.element(boundBy: 0)
+        for (dx, dy) in [(-420.0, -180.0), (380.0, 160.0), (-250.0, 0.0), (300.0, 60.0), (-500.0, -200.0), (500.0, 200.0)] {
+            let corner = window.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 1)).withOffset(CGVector(dx: -3, dy: -3))
+            // A slow drag, so AppKit runs many live-resize layout passes, like a person resizing.
+            corner.press(forDuration: 0.2, thenDragTo: corner.withOffset(CGVector(dx: dx, dy: dy)),
+                         withVelocity: .slow, thenHoldForDuration: 0.2)
+            XCTAssertEqual(app.state, .runningForeground, "Curator stopped running while resizing")
+        }
+        XCTAssertTrue(posters.firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["detailTitle"].exists)
+    }
+
     @MainActor
     func testSearchShowsNoResultsForAnUnknownTitle() throws {
         let app = try launchWithPlex()

@@ -193,6 +193,18 @@ tart exec "$CLONE" /bin/zsh -lc "
 test_rc=$?
 set -e
 
+# --- The app's own warnings and crashes ----------------------------------------
+# SwiftUI reports state-flow problems ("Modifying state during view update", "onChange ...
+# tried to update multiple times per frame", AttributeGraph cycles) only in the log, and a
+# crash only in a crash report. Keep both with the results.
+
+tart exec "$CLONE" /bin/zsh -lc "
+  /usr/bin/log show --last 30m --style compact \
+    --predicate 'process == \"Curator\" AND (messageType == error OR messageType == fault OR subsystem BEGINSWITH \"com.apple.SwiftUI\" OR subsystem == \"com.apple.AttributeGraph\")' \
+    > $GUEST_RESULTS/app-warnings.log 2>&1
+  mkdir -p $GUEST_RESULTS/crashes
+  cp ~/Library/Logs/DiagnosticReports/Curator*.ips $GUEST_RESULTS/crashes/ 2>/dev/null || true" || true
+
 # --- Results back ------------------------------------------------------------
 
 mkdir -p "$RESULTS_DIR"
@@ -206,6 +218,11 @@ else
   log "RESULT: TEST FAILED (exit $test_rc)"
 fi
 grep -E "Test case .* (passed|failed|skipped)|Executed|TEST (SUCCEEDED|FAILED)" "$RESULTS_DIR/xcodebuild.log" | tail -15 || true
+crashes=( "$RESULTS_DIR"/crashes/*.ips(N) )
+(( ${#crashes} )) && log "CRASH REPORTS: ${#crashes} in $RESULTS_DIR/crashes/"
+warnings="$(grep -c -i -E "modifying state during view update|multiple times per frame|attributegraph: cycle|publishing changes from within view updates|constraint|exception" "$RESULTS_DIR/app-warnings.log" 2>/dev/null || true)"
+log "SwiftUI/AppKit warnings in the app's log: ${warnings:-0} (see app-warnings.log)"
+
 print ""
 log "Result bundle: $RESULTS_DIR/UITests.xcresult"
 log "Full log:      $RESULTS_DIR/xcodebuild.log"
