@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// The newest items across all libraries, polled while Recently Added is on screen.
+/// The newest items across all libraries, polled every minute by `AppModel`.
 @Observable
 final class RecentStore {
     static let pageSize = 60
@@ -13,36 +13,29 @@ final class RecentStore {
     private(set) var error: PlexError?
     /// Items that appeared during this session's polling; drives the "just added" banner.
     private(set) var arrivals: [PlexItem] = []
-    /// Items added after this moment get a "New" badge.
-    private(set) var seenBaseline: Date?
+
+    /// Imports this recent get a NEW badge.
+    nonisolated static let newWindow: TimeInterval = 3 * 60 * 60
 
     @ObservationIgnored var context: () -> PlexContext? = { nil }
     @ObservationIgnored private var loadMoreTask: Task<Void, Never>?
     @ObservationIgnored private var limit = pageSize
-    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var generation = 0
-    private static let baselineKey = "recentSeenBaseline"
-    private static let nextBaselineKey = "recentNextBaseline"
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
-        // What the last session showed becomes this session's "seen" line, so anything
-        // imported while the app was closed is marked New.
-        let next = defaults.double(forKey: Self.nextBaselineKey)
-        if next > 0 {
-            defaults.set(next, forKey: Self.baselineKey)
-            defaults.removeObject(forKey: Self.nextBaselineKey)
-        }
-        let stored = defaults.double(forKey: Self.baselineKey)
-        seenBaseline = stored > 0 ? Date(timeIntervalSince1970: stored) : nil
+    init() {
+        // Earlier builds tracked a "seen" date; badges are now purely time-based.
+        UserDefaults.standard.removeObject(forKey: "recentSeenBaseline")
+        UserDefaults.standard.removeObject(forKey: "recentNextBaseline")
     }
 
-    func isNew(_ item: PlexItem) -> Bool {
-        guard let seenBaseline, let addedAt = item.addedAt else { return false }
-        return addedAt > seenBaseline
+    nonisolated static func isNew(_ item: PlexItem, now: Date = .now) -> Bool {
+        guard let addedAt = item.addedAt else { return false }
+        return now.timeIntervalSince(addedAt) < newWindow
     }
 
-    var newCount: Int { items.count(where: isNew) }
+    func newCount(now: Date = .now) -> Int {
+        items.count { Self.isNew($0, now: now) }
+    }
 
     /// Reloads the newest `limit` items from every library. `reset` starts over from one page
     /// (after connecting to a different server); otherwise it refreshes what's shown and
@@ -103,13 +96,6 @@ final class RecentStore {
         hasMore = more
         error = failure
         hasLoaded = true
-
-        if seenBaseline == nil {
-            // First run: nothing counts as new until something arrives.
-            markAllSeen()
-        } else if let newest = items.first?.addedAt {
-            defaults.set(newest.timeIntervalSince1970, forKey: Self.nextBaselineKey)
-        }
     }
 
     /// Intent from the view when the last item scrolls into sight.
@@ -122,16 +108,7 @@ final class RecentStore {
         }
     }
 
-    func markAllSeen() {
-        let newest = items.first?.addedAt ?? .now
-        seenBaseline = newest
-        arrivals = []
-        defaults.set(newest.timeIntervalSince1970, forKey: Self.baselineKey)
-        defaults.removeObject(forKey: Self.nextBaselineKey)
-    }
-
     func dismissArrivals() {
         arrivals = []
     }
-
 }

@@ -3,11 +3,9 @@ import Observation
 import os
 
 /// Connection settings, kept in a `.env` file in the app's Application Support folder
-/// with the same keys as the repo's `.env.example`.
+/// with the same keys as the repo's `.env.example`. Never the Keychain.
 @Observable
 final class SettingsStore {
-    static let defaultServerAddress = "http://joe:32400"
-
     enum Key {
         static let serverAddress = "PLEX_URL"
         static let plexToken = "PLEX_TOKEN"
@@ -47,7 +45,7 @@ final class SettingsStore {
             Log.settings.error("Reading \(fileURL.path, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
             file = EnvFile()
         }
-        serverAddress = file[Key.serverAddress] ?? Self.defaultServerAddress
+        serverAddress = file[Key.serverAddress] ?? ""
         plexToken = file[Key.plexToken] ?? ""
         tmdbKey = file[Key.tmdbKey] ?? ""
     }
@@ -71,26 +69,6 @@ final class SettingsStore {
 
     /// Changes whenever the Plex connection details change.
     var plexConnectionKey: String { "\(serverURL?.absoluteString ?? "")\n\(plexToken.trimmed)" }
-
-    /// Copies any of Curator's keys found in another `.env`, such as the repo's.
-    /// Returns the keys that were imported.
-    @discardableResult
-    func importValues(from other: EnvFile) -> [String] {
-        var imported: [String] = []
-        if let value = other[Key.serverAddress], !value.isEmpty {
-            serverAddress = value
-            imported.append(Key.serverAddress)
-        }
-        if let value = other[Key.plexToken], !value.isEmpty {
-            plexToken = value
-            imported.append(Key.plexToken)
-        }
-        if let value = other[Key.tmdbKey], !value.isEmpty {
-            tmdbKey = value
-            imported.append(Key.tmdbKey)
-        }
-        return imported
-    }
 
     private func changed(_ key: String, _ value: String, from oldValue: String, _ change: Change) {
         guard value.trimmed != oldValue.trimmed else { return }

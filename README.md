@@ -10,13 +10,14 @@ built for the moment you're ripping and importing discs and want to see them lan
 
 - **Recently Added** across all libraries, grouped into Today, Yesterday, Last 7 Days and
   Earlier. It refreshes every minute, marks new imports with a NEW badge, and shows a
-  banner when a title arrives.
+  banner when a title arrives. Anything imported in the last 3 hours gets a NEW badge.
 - **Search** by title, and also by actor or director ("Coen" finds *Fargo* and *The Big
   Lebowski*). Matches on cast or crew say why they matched.
 - **Browse** each library in title order.
 - **Details inspector** for the selected title: artwork, summary, runtime, cast, when it
   was added, video and audio format, and the file path and size on the server.
-- **Menu bar button** listing the newest imports, with a count of unseen ones.
+- **Menu bar button** listing the last 5 imports and how long ago each arrived, with a
+  count of those added in the last 3 hours.
 - **Grid or list** view.
 - **Keyboard**:
 
@@ -44,21 +45,20 @@ Support). It never uses the Keychain. The keys match [`.env.example`](.env.examp
 
 | Key | Value |
 |---|---|
-| `PLEX_URL` | Server address, e.g. `http://joe:32400`. A bare host like `joe` also works. |
+| `PLEX_URL` | Server address, e.g. `http://my-plex-mac:32400`. A bare name or IP also works; Curator adds port 32400. |
 | `PLEX_TOKEN` | Your Plex server token |
 | `TMDB_API_KEY` | Optional TMDB key |
 
-Enter them in **Settings** (⌘,), or put them in a `.env` file and use **Settings → Import
-.env…**. The repo's `.env` is git-ignored.
-
-To read the Plex token from the server over SSH:
+Enter them in **Settings** (⌘,). Each field has step-by-step help. To find the Plex
+token, open any movie in Plex Web, choose **⋯ → Get Info → View XML**, and copy the
+`X-Plex-Token` value from the page's URL. If the server is a Mac, you can also run this
+on it:
 
 ```sh
-ssh joe 'defaults read com.plexapp.plexmediaserver PlexOnlineToken'
+defaults read com.plexapp.plexmediaserver PlexOnlineToken
 ```
 
-Or, in Plex Web, open any item, choose **⋯ → Get Info → View XML**, and copy the
-`X-Plex-Token` value from the page's URL.
+The repo's own `.env` (git-ignored) is for development and command-line testing.
 
 **Test Connection** in Settings shows the server, each library's size, and whether TMDB
 accepted the key.
@@ -100,7 +100,7 @@ The DMG is **not notarized**, so Gatekeeper blocks it the first time:
 - If it arrived by AirDrop or a browser, open it once with **System Settings → Privacy &
   Security → Open Anyway**.
 
-On first launch, allow Curator on the local network, then set it up as above.
+On first launch, allow Curator on the local network, then open Settings.
 
 ## How it works
 

@@ -19,8 +19,8 @@ fields:
 | TMDB API key | `TMDB_API_KEY` | — (v3 key or v4 read token) |
 
 Values live in a `.env` file (mode 0600) in the app's Application Support folder, with the
-same keys as the repo's `.env.example`. **Import .env…** in Settings loads them from the
-repo's `.env`. Curator never uses the Keychain.
+same keys as the repo's `.env.example`. Settings has step-by-step help for finding each
+value (no Terminal needed). Curator never uses the Keychain.
 
 **Test Connection** hits `/` (name + version) and `/library/sections` and shows the server,
 the libraries and their item counts, or a specific error ("401: token rejected"). Section
@@ -42,7 +42,7 @@ today).
   `X-Plex-Container-Start` and `X-Plex-Container-Size` (one alone is silently ignored).
   Page 50 at a time, infinite scroll.
 - Grouped **Today / Yesterday / This Week / Earlier** with relative times.
-- **"New" badge** for items added since you last looked (persisted `lastSeenAddedAt`).
+- **NEW badge** for anything imported in the last 3 hours.
 - Auto-refresh every 60 s while the window is visible; banner "2 new titles" when an import
   lands.
 

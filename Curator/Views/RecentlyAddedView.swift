@@ -23,15 +23,6 @@ struct RecentlyAddedView: View {
             .animation(.default, value: recent.arrivals.map(\.id))
             .navigationTitle("Recently Added")
             .navigationSubtitle(subtitle)
-            .toolbar {
-                ToolbarItem {
-                    Button("Mark All as Seen", systemImage: "checkmark.circle") {
-                        recent.markAllSeen()
-                    }
-                    .help("Clear the New badges")
-                    .disabled(recent.newCount == 0)
-                }
-            }
     }
 
     @ViewBuilder
@@ -61,7 +52,7 @@ struct RecentlyAddedView: View {
                             .compactMap(\.self)
                             .joined(separator: " · ")
                     },
-                    isNew: recent.isNew,
+                    isNew: { RecentStore.isNew($0, now: context.date) },
                     onReachEnd: loadMore,
                     scrollToTop: scrollToTop
                 )
@@ -70,7 +61,7 @@ struct RecentlyAddedView: View {
     }
 
     private var subtitle: String {
-        let count = recent.newCount
+        let count = recent.newCount()
         return count == 0 ? "" : "\(count) new"
     }
 

@@ -5,69 +5,38 @@ struct SettingsView: View {
     @Environment(LibraryStore.self) private var library
     @Environment(AppModel.self) private var model
     @State private var isTesting = false
-    @State private var importMessage: String?
 
-    private static let tokenCommand = "ssh joe 'defaults read com.plexapp.plexmediaserver PlexOnlineToken'"
+    /// For a Plex server running on a Mac: reads the token from Plex's own settings.
+    private static let tokenCommand = "defaults read com.plexapp.plexmediaserver PlexOnlineToken"
 
     var body: some View {
         @Bindable var settings = settings
 
         Form {
             Section {
-                TextField("Server", text: $settings.serverAddress, prompt: Text(SettingsStore.defaultServerAddress))
+                TextField("Server", text: $settings.serverAddress, prompt: Text("http://my-plex-mac:32400"))
                     .textContentType(.URL)
                 if let url = settings.serverURL {
                     if url.absoluteString != settings.serverAddress.trimmed {
                         caption("Connects to \(url.absoluteString)")
                     }
                 } else if !settings.serverAddress.trimmed.isEmpty {
-                    caption("Enter a host name like joe, or a URL like http://joe:32400.", color: .red)
+                    caption("Enter the computer's name, like my-plex-mac, or a full address like http://192.168.1.20:32400.", color: .red)
+                } else {
+                    caption("The computer running Plex Media Server. Its name or IP address is enough; Curator adds port 32400.")
                 }
 
                 RevealableSecureField(title: "Token", text: $settings.plexToken)
-                VStack(alignment: .leading, spacing: 4) {
-                    caption("Read the token on joe with:")
-                    HStack(spacing: 6) {
-                        Text(Self.tokenCommand)
-                            .font(.caption.monospaced())
-                            .textSelection(.enabled)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Button("Copy", systemImage: "doc.on.doc") {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(Self.tokenCommand, forType: .string)
-                        }
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(.borderless)
-                        .help("Copy command")
-                    }
-                }
+                TokenHelp(plexWebURL: plexWebURL, tokenCommand: Self.tokenCommand)
             } header: {
                 Text("Plex Server")
             }
 
             Section {
                 RevealableSecureField(title: "API Key", text: $settings.tmdbKey)
-                HStack(spacing: 0) {
-                    caption("Optional. Adds TMDB posters and backdrops; without it, artwork comes from Plex. A v3 API key or v4 read access token both work. ")
-                    Link("Get a key", destination: URL(string: "https://www.themoviedb.org/settings/api")!)
-                        .font(.caption)
-                }
+                TMDBHelp()
             } header: {
-                Text("TMDB")
-            }
-
-            Section {
-                HStack {
-                    Button("Import .env…") { importEnvFile() }
-                    Button("Show in Finder") {
-                        NSWorkspace.shared.activateFileViewerSelecting([settings.fileURL])
-                    }
-                    Spacer()
-                }
-                caption(importMessage ?? "Saved to \(settings.fileURL.path(percentEncoded: false)) using the keys in .env.example.")
-            } header: {
-                Text("Storage")
+                Text("Artwork from TMDB (optional)")
             }
 
             Section {
@@ -97,23 +66,9 @@ struct SettingsView: View {
         await model.testConnection()
     }
 
-    private func importEnvFile() {
-        let panel = NSOpenPanel()
-        panel.title = "Import .env"
-        panel.message = "Choose a .env file with PLEX_URL, PLEX_TOKEN or TMDB_API_KEY."
-        panel.showsHiddenFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-
-        do {
-            let imported = settings.importValues(from: try EnvFile(contentsOf: url))
-            importMessage = imported.isEmpty
-                ? "No PLEX_URL, PLEX_TOKEN or TMDB_API_KEY in \(url.lastPathComponent)."
-                : "Imported \(imported.joined(separator: ", ")) from \(url.path(percentEncoded: false))."
-        } catch {
-            importMessage = "Couldn't read \(url.lastPathComponent): \(error.localizedDescription)"
-        }
+    /// Plex Web on the configured server, or plex.tv's hosted Plex Web.
+    private var plexWebURL: URL {
+        settings.serverURL?.appending(path: "web") ?? URL(string: "https://app.plex.tv")!
     }
 
     private func caption(_ text: String, color: Color = .secondary) -> some View {
@@ -121,6 +76,92 @@ struct SettingsView: View {
             .font(.caption)
             .foregroundStyle(color)
             .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/// Step-by-step help for finding the Plex token, without needing Terminal.
+private struct TokenHelp: View {
+    let plexWebURL: URL
+    let tokenCommand: String
+
+    var body: some View {
+        DisclosureGroup("How do I find my token?") {
+            VStack(alignment: .leading, spacing: 8) {
+                Step(1) {
+                    HStack(spacing: 4) {
+                        Text("Open Plex in your browser and sign in.")
+                        Link("Open Plex Web", destination: plexWebURL)
+                    }
+                }
+                Step(2) { Text("Open any movie, then choose **⋯ → Get Info**.") }
+                Step(3) { Text("Click **View XML** at the bottom of the window.") }
+                Step(4) { Text("In the new page's address bar, copy the text after **X-Plex-Token=** and paste it above.") }
+
+                Divider()
+                Text("If Plex Media Server runs on a Mac, you can also run this in Terminal on that Mac:")
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Text(tokenCommand)
+                        .font(.caption.monospaced())
+                        .textSelection(.enabled)
+                    Button("Copy", systemImage: "doc.on.doc") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(tokenCommand, forType: .string)
+                    }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.borderless)
+                    .help("Copy command")
+                }
+            }
+            .font(.callout)
+            .padding(.top, 4)
+        }
+    }
+}
+
+/// How to get a free TMDB key; artwork works without one.
+private struct TMDBHelp: View {
+    var body: some View {
+        DisclosureGroup("Posters come from Plex without a key. How do I get one?") {
+            VStack(alignment: .leading, spacing: 8) {
+                Step(1) {
+                    HStack(spacing: 4) {
+                        Text("Create a free account at")
+                        Link("themoviedb.org", destination: URL(string: "https://www.themoviedb.org/signup")!)
+                    }
+                }
+                Step(2) {
+                    HStack(spacing: 4) {
+                        Text("Open")
+                        Link("Settings → API", destination: URL(string: "https://www.themoviedb.org/settings/api")!)
+                        Text("and request a Developer key.")
+                    }
+                }
+                Step(3) { Text("Copy the **API Key** (or the longer **API Read Access Token**) and paste it above.") }
+            }
+            .font(.callout)
+            .padding(.top, 4)
+        }
+    }
+}
+
+private struct Step<Content: View>: View {
+    let number: Int
+    @ViewBuilder let content: Content
+
+    init(_ number: Int, @ViewBuilder content: () -> Content) {
+        self.number = number
+        self.content = content()
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("\(number).")
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+            content
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 

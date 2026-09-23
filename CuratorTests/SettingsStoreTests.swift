@@ -43,7 +43,7 @@ struct SettingsStoreTests {
 
     @Test func defaultsWithoutAFile() {
         let store = SettingsStore(fileURL: tempURL())
-        #expect(store.serverAddress == SettingsStore.defaultServerAddress)
+        #expect(store.serverAddress.isEmpty)
         #expect(store.plexToken.isEmpty)
         #expect(store.tmdbClient == nil)
         #expect(!store.isPlexConfigured)
@@ -52,10 +52,12 @@ struct SettingsStoreTests {
     @Test func savesAndReloads() throws {
         let url = tempURL()
         let store = SettingsStore(fileURL: url)
+        store.serverAddress = "joe"
         store.plexToken = " token\n"
         store.tmdbKey = "key"
 
         let text = try String(contentsOf: url, encoding: .utf8)
+        #expect(text.contains("PLEX_URL=joe"))
         #expect(text.contains("PLEX_TOKEN=token"))
         #expect(text.contains("TMDB_API_KEY=key"))
         let permissions = try FileManager.default.attributesOfItem(atPath: url.path)[.posixPermissions] as? Int
@@ -64,13 +66,5 @@ struct SettingsStoreTests {
         let reloaded = SettingsStore(fileURL: url)
         #expect(reloaded.plexToken == "token")
         #expect(reloaded.isPlexConfigured)
-    }
-
-    @Test func importsOnlyCuratorKeys() {
-        let store = SettingsStore(fileURL: tempURL())
-        let imported = store.importValues(from: EnvFile("TMDB_API_KEY=abc\nPLEX_TOKEN=\nUNRELATED=x\n"))
-        #expect(imported == ["TMDB_API_KEY"])
-        #expect(store.tmdbKey == "abc")
-        #expect(store.plexToken.isEmpty)
     }
 }

@@ -5,7 +5,7 @@ struct MenuBarLabel: View {
     @Environment(RecentStore.self) private var recent
 
     var body: some View {
-        let count = recent.newCount
+        let count = recent.newCount()
         HStack(spacing: 2) {
             Image(.curatorBust)
             if count > 0 {
@@ -18,8 +18,8 @@ struct MenuBarLabel: View {
 
 /// The status bar window: the newest imports at a glance.
 struct MenuBarView: View {
-    static let itemLimit = 8
-    static let contentHeight: CGFloat = 400
+    static let itemLimit = 5
+    static let contentHeight: CGFloat = 300
 
     @Environment(AppModel.self) private var model
     @Environment(SettingsStore.self) private var settings
@@ -52,12 +52,6 @@ struct MenuBarView: View {
                 ConnectionStatusView()
             }
             Spacer()
-            if recent.newCount > 0 {
-                Button("Mark All as Seen", systemImage: "checkmark.circle") { recent.markAllSeen() }
-                    .labelStyle(.iconOnly)
-                    .buttonStyle(.borderless)
-                    .help("Mark All as Seen")
-            }
             Button("Refresh", systemImage: "arrow.clockwise") { model.refresh() }
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
@@ -71,7 +65,7 @@ struct MenuBarView: View {
     private var content: some View {
         switch library.status {
         case .notConfigured:
-            placeholder("Connect to Plex", systemImage: "server.rack", detail: "Add your server and token in Settings.")
+            placeholder("Connect to Plex", systemImage: "server.rack", detail: "Open Settings to add your Plex server; it shows how to find each value.")
         case .failed(let error):
             placeholder(error.localizedDescription, systemImage: "exclamationmark.triangle", detail: error.recoverySuggestion)
         case .connecting, .connected:
@@ -84,7 +78,7 @@ struct MenuBarView: View {
                     ScrollView {
                         VStack(spacing: 2) {
                             ForEach(recent.items.prefix(Self.itemLimit)) { item in
-                                MenuBarRow(item: item, isNew: recent.isNew(item), now: context.date) {
+                                MenuBarRow(item: item, isNew: RecentStore.isNew(item, now: context.date), now: context.date) {
                                     show(item)
                                 }
                             }

@@ -21,34 +21,24 @@ struct RecentGroupTests {
     }
 }
 
-@MainActor
-struct RecentStoreTests {
-    private func item(_ key: String, addedAt: TimeInterval) throws -> PlexItem {
-        let json = #"{"ratingKey":"\#(key)","type":"movie","title":"t","addedAt":\#(addedAt)}"#
+struct NewBadgeTests {
+    private func item(addedAt: Date) throws -> PlexItem {
+        let json = #"{"ratingKey":"1","type":"movie","title":"t","addedAt":\#(addedAt.timeIntervalSince1970)}"#
         return try JSONDecoder().decode(PlexItem.self, from: Data(json.utf8))
     }
 
-    private func freshDefaults() -> UserDefaults {
-        let name = "CuratorTests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: name)!
-        defaults.removePersistentDomain(forName: name)
-        return defaults
+    let now = Date(timeIntervalSince1970: 1_790_114_400)
+
+    @Test func newForThreeHours() throws {
+        #expect(RecentStore.isNew(try item(addedAt: now - 60), now: now))
+        #expect(RecentStore.isNew(try item(addedAt: now - 3 * 3600 + 60), now: now))
+        #expect(!RecentStore.isNew(try item(addedAt: now - 3 * 3600 - 60), now: now))
     }
 
-    @Test func nothingIsNewWithoutABaseline() throws {
-        let store = RecentStore(defaults: freshDefaults())
-        #expect(store.isNew(try item("1", addedAt: 1_790_000_000)) == false)
-    }
-
-    @Test func lastSessionBecomesTheBaseline() throws {
-        let defaults = freshDefaults()
-        defaults.set(1_790_000_000.0, forKey: "recentSeenBaseline")
-        defaults.set(1_790_100_000.0, forKey: "recentNextBaseline")
-
-        let store = RecentStore(defaults: defaults)
-        #expect(store.isNew(try item("old", addedAt: 1_790_050_000)) == false)
-        #expect(store.isNew(try item("new", addedAt: 1_790_200_000)))
-        #expect(defaults.object(forKey: "recentNextBaseline") == nil)
+    @Test func noDateIsNotNew() throws {
+        let json = #"{"ratingKey":"1","type":"movie","title":"t"}"#
+        let undated = try JSONDecoder().decode(PlexItem.self, from: Data(json.utf8))
+        #expect(!RecentStore.isNew(undated, now: now))
     }
 }
 

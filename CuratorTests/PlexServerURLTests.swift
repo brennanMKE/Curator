@@ -7,7 +7,7 @@ struct PlexServerURLTests {
         ("joe", "http://joe:32400"),
         ("  joe\n", "http://joe:32400"),
         ("joe:32400", "http://joe:32400"),
-        ("192.168.4.103", "http://192.168.4.103:32400"),
+        ("192.0.2.10", "http://192.0.2.10:32400"),
         ("http://joe:32400/", "http://joe:32400"),
         ("HTTP://joe:32400", "http://joe:32400"),
         ("https://plex.example.com", "https://plex.example.com"),

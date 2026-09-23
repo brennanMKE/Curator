@@ -121,7 +121,7 @@ private struct MainContent: View {
             ContentUnavailableView {
                 Label("Connect to Plex", systemImage: "server.rack")
             } description: {
-                Text("Add your Plex server address and token in Settings.")
+                Text("Curator needs your Plex server's address and your Plex token. Settings walks you through finding both.")
             } actions: {
                 SettingsLink { Text("Open Settings…") }
                     .buttonStyle(.borderedProminent)
