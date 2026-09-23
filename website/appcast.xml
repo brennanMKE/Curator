@@ -7,6 +7,16 @@
     <language>en</language>
     <!-- ITEMS: scripts/update-website.sh adds each release here, newest first. Don't edit by hand. -->
     <item>
+      <title>0.0.2</title>
+      <pubDate>Wed, 23 Sep 2026 22:09:24 +0000</pubDate>
+      <sparkle:version>202609232207</sparkle:version>
+      <sparkle:shortVersionString>0.0.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://curator.sstools.co/changelog.html#v0-0-2</sparkle:releaseNotesLink>
+      <description><![CDATA[<p>Fixes a crash and smooths out the poster grid.</p><ul><li><b>Fixed:</b> Curator could crash while you resized its window, or when the details panel opened.</li><li><b>Smoother grid:</b> clicking a poster no longer scrolls the grid, the banner for a new import no longer shifts the posters, and the once-a-minute refresh no longer redraws the grid when nothing changed.</li><li><b>Menu bar:</b> Open Curator, Settings and Quit are now icons.</li></ul>]]></description>
+      <enclosure url="https://curator.sstools.co/downloads/Curator-0.0.2.dmg" length="3984454" type="application/octet-stream" sparkle:edSignature="NFD3x1k+c4bdR7kLgkzdLwLvYpxBCGjwaG868ZjWlSLmeRfXGqUa/bp0JywJWIHT3MoI7bGmVR7X42EQMUlXDA=="/>
+    </item>
+    <item>
       <title>0.0.1</title>
       <pubDate>Wed, 23 Sep 2026 21:27:27 +0000</pubDate>
       <sparkle:version>202609232126</sparkle:version>
