@@ -7,6 +7,16 @@
     <language>en</language>
     <!-- ITEMS: scripts/update-website.sh adds each release here, newest first. Don't edit by hand. -->
     <item>
+      <title>0.0.3</title>
+      <pubDate>Wed, 23 Sep 2026 23:29:50 +0000</pubDate>
+      <sparkle:version>202609232328</sparkle:version>
+      <sparkle:shortVersionString>0.0.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://curator.sstools.co/changelog.html#v0-0-3</sparkle:releaseNotesLink>
+      <description><![CDATA[<p>Sort your libraries.</p><ul><li><b>Sort</b> Movies and TV Shows by title, release date, date added or rating, from the new Sort menu in the toolbar. Each has a natural order (A to Z, newest first, highest first) that you can flip, and Curator remembers your choice.</li><li>Each poster's second line shows what it's sorted by: the release date, when it was added, or its rating.</li></ul>]]></description>
+      <enclosure url="https://curator.sstools.co/downloads/Curator-0.0.3.dmg" length="4008320" type="application/octet-stream" sparkle:edSignature="zccZLF5/Trs8nztoy6VSwwMl8e+n3HqUPqSROs3wNmAatmUioAqv65j811SSm9cAq39HToesk8KseoJss4rsDA=="/>
+    </item>
+    <item>
       <title>0.0.2</title>
       <pubDate>Wed, 23 Sep 2026 22:09:24 +0000</pubDate>
       <sparkle:version>202609232207</sparkle:version>
