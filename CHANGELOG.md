@@ -3,6 +3,17 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
+## 0.0.2
+
+Fixes a crash and smooths out the poster grid.
+
+- **Fixed:** Curator could crash while you resized its window, or when the details panel
+  opened.
+- **Smoother grid:** clicking a poster no longer scrolls the grid, the banner for a new import
+  no longer shifts the posters, and the once-a-minute refresh no longer redraws the grid when
+  nothing changed.
+- **Menu bar:** Open Curator, Settings and Quit are now icons.
+
 ## 0.0.1
 
 The first release.
