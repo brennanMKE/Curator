@@ -88,11 +88,15 @@ Curator/
 
 1. ✅ **Settings & connection** — Settings window, Keychain, Test Connection, library
    discovery.
-2. **Recently Added** — paging, grouping, Plex posters, detail inspector.
-3. **Search** — dual-query merge, cast/crew section, empty states.
-4. **TMDB artwork** — guid extraction, lookup, caching, Plex fallback.
-5. **Polish** — auto-refresh + New badges, keyboard nav (arrows, Return, Space), Open in
-   Plex, dark/light.
+2. ✅ **Recently Added** — paging, grouping, Plex posters, detail inspector.
+3. ✅ **Search** — dual-query merge, cast/crew section, empty states.
+4. ✅ **TMDB artwork** — guid extraction, lookup, caching, Plex fallback.
+5. **Polish** — keyboard nav (arrows, Return, Space), grid/list toggle, dark/light pass.
+   Auto-refresh, New badges and Open in Plex landed with milestones 2–4.
+
+Feature gating: everything needs a working Plex connection (otherwise the window shows how
+to connect). TMDB is optional — artwork uses it only while the key validates, and falls back
+to Plex's own posters when it's missing, rejected or unreachable.
 
 ## Later (not v1)
 

@@ -8,6 +8,8 @@ nonisolated enum PlexError: LocalizedError, Equatable {
     case unreachable(String)
     case http(Int)
     case badResponse
+    /// The request's task was cancelled; not a failure to show anyone.
+    case cancelled
 
     init(_ error: URLError) {
         switch error.code {
@@ -15,6 +17,8 @@ nonisolated enum PlexError: LocalizedError, Equatable {
             self = .insecureConnectionBlocked
         case .userAuthenticationRequired:
             self = .unauthorized
+        case .cancelled:
+            self = .cancelled
         default:
             self = .unreachable(error.localizedDescription)
         }
@@ -29,6 +33,7 @@ nonisolated enum PlexError: LocalizedError, Equatable {
         case .unreachable(let message): "Couldn't reach the Plex server — \(message)"
         case .http(let status): "Plex returned HTTP \(status)"
         case .badResponse: "Plex sent a response Curator couldn't read"
+        case .cancelled: "The request was cancelled"
         }
     }
 
@@ -44,7 +49,7 @@ nonisolated enum PlexError: LocalizedError, Equatable {
             "Plain HTTP is only allowed to local hosts. Use joe, joe.local or an IP address, or switch to https."
         case .unreachable:
             "Check the address and that joe is awake. If this is the first launch, allow Curator in System Settings › Privacy & Security › Local Network."
-        case .http, .badResponse:
+        case .http, .badResponse, .cancelled:
             "Try again. If it keeps happening, check the Plex server's logs."
         }
     }

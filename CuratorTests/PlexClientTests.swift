@@ -28,4 +28,18 @@ struct PlexClientTests {
     @Test func rootPath() {
         #expect(client.request("/").url?.absoluteString == "http://joe:32400/")
     }
+
+    @Test func queryIsStrictlyEncoded() {
+        let request = client.request("/library/sections/4/all", query: [
+            URLQueryItem(name: "sort", value: "addedAt:desc"),
+            URLQueryItem(name: "title", value: "cowboys & aliens"),
+        ])
+        #expect(request.url?.query(percentEncoded: true) == "sort=addedAt%3Adesc&title=cowboys%20%26%20aliens")
+    }
+
+    @Test func imageRequestEncodesThePath() {
+        let request = client.imageRequest(path: "/library/metadata/446/thumb/1790136490", width: 342, height: 513)
+        #expect(request.url?.path() == "/photo/:/transcode")
+        #expect(request.url?.query(percentEncoded: true)?.contains("url=%2Flibrary%2Fmetadata%2F446%2Fthumb%2F1790136490") == true)
+    }
 }

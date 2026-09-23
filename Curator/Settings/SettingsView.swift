@@ -3,15 +3,10 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(LibraryStore.self) private var library
-    @State private var tmdbStatus: TMDBStatus = .untested
+    @Environment(TMDBStore.self) private var tmdb
     @State private var isTesting = false
 
     private static let tokenCommand = "ssh joe 'defaults read com.plexapp.plexmediaserver PlexOnlineToken'"
-
-    enum TMDBStatus: Equatable {
-        case untested, checking, accepted
-        case failed(String)
-    }
 
     var body: some View {
         @Bindable var settings = settings
@@ -53,7 +48,7 @@ struct SettingsView: View {
             Section {
                 RevealableSecureField(title: "API Key", text: $settings.tmdbKey)
                 HStack(spacing: 0) {
-                    caption("Used for posters and backdrops. A v3 API key or v4 read access token both work. ")
+                    caption("Optional. Adds TMDB posters and backdrops; without it, artwork comes from Plex. A v3 API key or v4 read access token both work. ")
                     Link("Get a key", destination: URL(string: "https://www.themoviedb.org/settings/api")!)
                         .font(.caption)
                 }
@@ -63,9 +58,7 @@ struct SettingsView: View {
 
             Section {
                 PlexStatusRow()
-                if settings.tmdbClient != nil {
-                    TMDBStatusRow(status: tmdbStatus)
-                }
+                TMDBStatusRow()
                 HStack {
                     Spacer()
                     Button("Test Connection") {
@@ -81,7 +74,6 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 540)
         .fixedSize(horizontal: false, vertical: true)
-        .onChange(of: settings.tmdbKey) { tmdbStatus = .untested }
     }
 
     private func testConnection() async {
@@ -89,15 +81,7 @@ struct SettingsView: View {
         defer { isTesting = false }
 
         async let plex: Void = library.refresh(using: settings)
-        if let tmdb = settings.tmdbClient {
-            tmdbStatus = .checking
-            do {
-                try await tmdb.validate()
-                tmdbStatus = .accepted
-            } catch {
-                tmdbStatus = .failed(error.localizedDescription)
-            }
-        }
+        await tmdb.validate(using: settings)
         await plex
     }
 
@@ -150,20 +134,22 @@ private struct PlexStatusRow: View {
 }
 
 private struct TMDBStatusRow: View {
-    let status: SettingsView.TMDBStatus
+    @Environment(TMDBStore.self) private var tmdb
 
     var body: some View {
-        switch status {
-        case .untested:
-            StatusLabel(title: "TMDB", detail: "Not tested yet.", symbol: "circle.dashed", tint: .secondary)
+        switch tmdb.status {
+        case .off:
+            StatusLabel(title: "TMDB not set", detail: "Artwork comes from Plex.", symbol: "circle.dashed", tint: .secondary)
         case .checking:
             LabeledContent("TMDB") {
                 ProgressView().controlSize(.small)
             }
-        case .accepted:
-            StatusLabel(title: "TMDB key accepted", detail: nil, symbol: "checkmark.circle.fill", tint: .green)
-        case .failed(let message):
-            StatusLabel(title: message, detail: nil, symbol: "xmark.circle.fill", tint: .red)
+        case .valid:
+            StatusLabel(title: "TMDB key accepted", detail: "Artwork comes from TMDB, with Plex as a fallback.", symbol: "checkmark.circle.fill", tint: .green)
+        case .rejected:
+            StatusLabel(title: "TMDB rejected the key", detail: "Using artwork from Plex until the key is fixed.", symbol: "xmark.circle.fill", tint: .red)
+        case .unreachable(let message):
+            StatusLabel(title: message, detail: "Using artwork from Plex.", symbol: "exclamationmark.triangle.fill", tint: .orange)
         }
     }
 }

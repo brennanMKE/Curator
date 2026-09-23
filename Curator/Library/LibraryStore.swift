@@ -24,6 +24,10 @@ final class LibraryStore {
     private(set) var server: PlexServerInfo?
     private(set) var libraries: [Library] = []
     private(set) var lastRefreshed: Date?
+    /// Bumped on every successful connect, so views reload their content.
+    private(set) var revision = 0
+
+    var sections: [PlexSection] { libraries.map(\.section) }
 
     @ObservationIgnored private var generation = 0
 
@@ -52,11 +56,20 @@ final class LibraryStore {
             self.libraries = counted
             self.lastRefreshed = .now
             self.status = .connected
+            self.revision += 1
             Log.plex.info("Connected to \(server.friendlyName ?? "Plex", privacy: .public): \(counted.count) libraries")
         } catch {
             guard current == generation else { return }
             reset(to: .failed(error as? PlexError ?? .unreachable(error.localizedDescription)))
         }
+    }
+
+    /// Updates item counts without disturbing the connection state; used while polling.
+    func refreshCounts(using client: PlexClient) async {
+        guard status == .connected else { return }
+        let counted = await Self.count(sections, with: client)
+        guard status == .connected, counted.map(\.id) == libraries.map(\.id) else { return }
+        libraries = counted
     }
 
     private func reset(to status: Status) {
