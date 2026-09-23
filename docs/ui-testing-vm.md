@@ -148,6 +148,7 @@ Accessibility identifiers the tests use: `poster` (each poster in the grid) and
 | `testSearchShowsNoResultsForAnUnknownTitle` | yes | ⌘F, typing, and the No Results state |
 | `testMenuBarWindowShowsItsControls` | no | The status item opens the panel with Open Curator, Settings and Quit (screenshot kept) |
 | `testMenuBarWindowListsTheLatestImports` | yes | At most 5 rows, none overlapping the header or footer (screenshot kept) |
+| `testTMDBKeyIsAccepted` | yes, and a TMDB key | Settings reports "TMDB key accepted" for the key from `.env` |
 | `testResizingTheWindowKeepsTheAppRunning` | yes | Six slow corner drags with the inspector open; each must really resize the window and the app must keep running (the 0.0.1 crash) |
 
 Live tests skip themselves when no Plex values are passed.

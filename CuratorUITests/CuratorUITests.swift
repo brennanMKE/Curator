@@ -111,6 +111,19 @@ final class CuratorUITests: XCTestCase {
         XCTAssertTrue(close.waitForNonExistence(timeout: 10))
     }
 
+    /// The TMDB key from .env is really accepted, so artwork comes from TMDB rather than silently
+    /// falling back to Plex's posters.
+    @MainActor
+    func testTMDBKeyIsAccepted() throws {
+        try XCTSkipIf((ProcessInfo.processInfo.environment["CURATOR_TMDB_API_KEY"] ?? "").isEmpty, "No TMDB key configured for this run")
+        let app = try launchWithPlex()
+        app.typeKey(",", modifierFlags: .command)
+        let settings = app.windows["Curator Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 10))
+        XCTAssertTrue(text(containing: "TMDB key accepted", in: settings).waitForExistence(timeout: 20),
+                      "TMDB didn't accept the key; artwork would fall back to Plex")
+    }
+
     /// Reproduces the 0.0.1 crash: resizing the window while the poster grid and inspector are
     /// showing threw `_postWindowNeedsUpdateConstraints` inside AppKit's layout pass.
     @MainActor
