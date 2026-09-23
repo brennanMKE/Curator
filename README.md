@@ -9,8 +9,8 @@ built for the moment you're ripping and importing discs and want to see them lan
 ## Features
 
 - **Recently Added** across all libraries, grouped into Today, Yesterday, Last 7 Days and
-  Earlier. It refreshes every minute, marks new imports with a NEW badge, and shows a
-  banner when a title arrives. Anything imported in the last 3 hours gets a NEW badge.
+  Earlier. It refreshes every minute, badges anything imported in the last 3 hours as
+  NEW, and shows a banner when a title arrives.
 - **Search** by title, and also by actor or director ("Coen" finds *Fargo* and *The Big
   Lebowski*). Matches on cast or crew say why they matched.
 - **Browse** each library in title order.

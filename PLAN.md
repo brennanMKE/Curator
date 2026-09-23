@@ -115,6 +115,50 @@ Feature gating: everything needs a working Plex connection (otherwise the window
 to connect). TMDB is optional — artwork uses it only while the key validates, and falls back
 to Plex's own posters when it's missing, rejected or unreachable.
 
+## Milestone 6: releases (modelled on Batty)
+
+Goal: notarized, versioned releases people can download from a website, with Sparkle
+updates. Batty (`../Batty`) already does all of this; copy its approach, minus its
+embedded CLI/broker/XPC parts.
+
+- **Versions.** Move `MARKETING_VERSION` into `Configuration/App.xcconfig` (the single
+  source of truth, not the pbxproj). The build number is set at archive time to the UTC
+  date. Guards: `release.sh` checks the built bundle matches; `preflight.sh` fails if the
+  version wasn't bumped past the newest appcast item.
+- **Sparkle.** Add Sparkle 2 by SPM. Info.plist keys `SUFeedURL`, `SUPublicEDKey` and
+  `SUEnableAutomaticChecks`, fed from xcconfig (`SU_FEED_URL`, `SU_PUBLIC_ED_KEY`). An
+  `UpdaterController` wraps `SPUStandardUpdaterController`, and a **Check for Updates…**
+  menu item goes in the app menu. The EdDSA key is generated with
+  `generate_keys --account Curator`, and must be backed up.
+- **Scripts.** Adapt from Batty or the mac-release skill templates:
+  - `preflight.sh`: credentials, versions and a clean tree
+  - `release.sh`: archive, Developer ID export, DMG, sign, notarize, staple, verify
+  - `verify-dmg.sh`
+  - `appcast-item.sh`: every attribute is read from the DMG
+  - `tag-release.sh`
+  - `deploy-website.sh`
+  - `setup-keys.sh`: `notarytool` profile `Curator-notary`, reusing the existing App
+    Store Connect API key
+  - `scripts/make-dmg.sh` stays for quick non-notarized builds.
+- **Website.** A `website/` folder (index, changelog, privacy, `appcast.xml`,
+  `downloads/`), deployed like Batty's (rsync to the web host).
+- **Where releases run.** On a Mac with the notary profile and Sparkle key. Today that's
+  the MacBook Air; `RELEASE-CREDENTIALS.md` explains how to move them. Notarizing and
+  publishing are always run by a person.
+
+Decisions needed: the website domain and host (for example, `curator.sstools.co` on the
+same host as Batty), and the first public version number.
+
+## Idea: show the title on the Apple TV
+
+Plex apps that act as players can be controlled over Plex's remote-control
+("Companion") API: `…/player/mirror/details?key=/library/metadata/{id}` shows an item's
+page, and `…/player/playback/playMedia` starts it. Curator could add a **Show on Apple
+TV** button if the Plex app on the Apple TV registers as a player. On 2026-09-23 the
+account listed no players: `/clients` and plex.tv resources showed only the server. Next
+step: with Plex open on the Apple TV, check whether it appears. If it doesn't, the
+current tvOS app may not support remote control.
+
 ## Later (not v1)
 
 - Menu bar extra showing the last 5 imports.
