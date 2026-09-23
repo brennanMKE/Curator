@@ -91,12 +91,19 @@ struct MenuBarView: View {
     }
 
     private var footer: some View {
-        HStack {
-            Button("Open Curator") { openMainWindow() }
+        HStack(spacing: 14) {
+            Button("Open Curator", systemImage: "macwindow") { openMainWindow() }
+                .help("Open Curator")
             Spacer()
-            SettingsLink { Text("Settings…") }
-            Button("Quit") { NSApplication.shared.terminate(nil) }
+            SettingsLink {
+                Label("Settings…", systemImage: "gearshape")
+            }
+            .help("Settings")
+            Button("Quit Curator", systemImage: "power") { NSApplication.shared.terminate(nil) }
+                .help("Quit Curator")
         }
+        .labelStyle(.iconOnly)
+        .imageScale(.large)
         .buttonStyle(.borderless)
         .padding(12)
     }
@@ -161,6 +168,7 @@ private struct MenuBarRow: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("menuBarRow")
         .onHover { isHovered = $0 }
     }
 }

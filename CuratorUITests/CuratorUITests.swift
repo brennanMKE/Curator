@@ -44,7 +44,32 @@ final class CuratorUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Try Again"].exists)
     }
 
+    @MainActor
+    func testMenuBarWindowShowsItsControls() throws {
+        let app = launch()
+        let window = try openMenuBarWindow(app)
+        XCTAssertTrue(window.buttons["Open Curator"].exists)
+        XCTAssertTrue(window.buttons["Settings…"].exists)
+        XCTAssertTrue(window.buttons["Quit Curator"].exists)
+        keepScreenshot(of: window, named: "Menu bar window, not connected")
+    }
+
     // MARK: Live (needs a Plex server)
+
+    @MainActor
+    func testMenuBarWindowListsTheLatestImports() throws {
+        let app = try launchWithPlex()
+        XCTAssertTrue(app.buttons.matching(identifier: "poster").firstMatch.waitForExistence(timeout: 30))
+        let window = try openMenuBarWindow(app)
+        let rows = window.buttons.matching(identifier: "menuBarRow")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertLessThanOrEqual(rows.count, 5)
+        // Every row sits inside the window: the list must not spill over the header or footer.
+        for index in 0..<rows.count where rows.element(boundBy: index).isHittable {
+            XCTAssertTrue(window.frame.contains(rows.element(boundBy: index).frame), "row \(index) spills outside the window")
+        }
+        keepScreenshot(of: window, named: "Menu bar window, connected")
+    }
 
     @MainActor
     func testRecentlyAddedShowsPostersAndDetails() throws {
@@ -91,6 +116,26 @@ final class CuratorUITests: XCTestCase {
     }
 
     // MARK: Helpers
+
+    /// Clicks Curator's status item and returns the window it opens.
+    @MainActor
+    private func openMenuBarWindow(_ app: XCUIApplication) throws -> XCUIElement {
+        let item = app.statusItems.firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 10), "no status item")
+        item.click()
+        let open = app.buttons["Open Curator"]
+        XCTAssertTrue(open.waitForExistence(timeout: 10), "the menu bar window didn't open")
+        let window = app.windows.containing(.button, identifier: "Open Curator").firstMatch
+        return window.exists ? window : app
+    }
+
+    @MainActor
+    private func keepScreenshot(of element: XCUIElement, named name: String) {
+        let attachment = XCTAttachment(screenshot: element.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
 
     @MainActor
     private func launch(environment: [String: String] = [:]) -> XCUIApplication {
