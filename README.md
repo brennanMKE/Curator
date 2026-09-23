@@ -83,6 +83,14 @@ xcodebuild test -project Curator.xcodeproj -scheme Curator \
 Never pass `-allowProvisioningUpdates`. It lets Xcode create or revoke certificates
 without asking.
 
+UI tests run only inside a disposable Tart VM, never on a host Mac:
+
+```sh
+scripts/run-ui-tests-vm.sh            # add --offline to keep Plex values out of the VM
+```
+
+See [docs/ui-testing-vm.md](docs/ui-testing-vm.md).
+
 ## Installing on another Mac
 
 ```sh
@@ -127,8 +135,10 @@ Curator/            App sources (Plex, TMDB, Library, Settings, Views, Artwork, 
   AppIcon.icon/     Icon Composer icon
   Assets.xcassets/  Accent color and the curator.bust menu bar symbol
 CuratorTests/       Swift Testing unit tests
+CuratorUITests/     XCUITest UI tests (VM only)
+docs/               ui-testing-vm.md
 Config/Info.plist   Local-network ATS exception
-scripts/            make-dmg.sh
+scripts/            make-dmg.sh, run-ui-tests-vm.sh
 Tools/              trace_icon.py (regenerates the icon and symbol from Curator.png)
 ```
 
