@@ -16,6 +16,9 @@ built for the moment you're ripping and importing discs and want to see them lan
 - **Browse** each library in title order.
 - **Details inspector** for the selected title: artwork, summary, runtime, cast, when it
   was added, video and audio format, and the file path and size on the server.
+- **Playlists:** right-click a poster and choose Add to Playlist, or drag it onto a playlist in
+  the sidebar. Reorder and remove titles, rename and delete playlists; they're saved on your
+  Plex server, so they play on every Plex app. See [docs/playlists.md](docs/playlists.md).
 - **Menu bar button** listing the last 5 imports and how long ago each arrived, with a
   count of those added in the last 3 hours.
 - **Grid or list** view.

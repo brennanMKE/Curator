@@ -150,6 +150,12 @@ embedded CLI/broker/XPC parts.
 Decisions needed: the website domain and host (for example, `curator.sstools.co` on the
 same host as Batty), and the first public version number.
 
+## Milestone 7: playlists (0.1.0)
+
+Add to Playlist in every context menu (3 recent shortcuts, All Playlists, New Playlist…), the
+five most recently changed playlists in the sidebar as drop targets, and a playlist view to
+reorder, remove, rename and delete. Design and Plex API findings: `docs/playlists.md`.
+
 ## Idea: show the title on the Apple TV
 
 Plex apps that act as players can be controlled over Plex's remote-control

@@ -3,6 +3,20 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
+## 0.1.0
+
+Playlists. Build a Die Hard marathon in a few clicks, and play it on any Plex app, including
+Apple TV.
+
+- **Add to Playlist:** right-click any poster. Your three most recently changed playlists are
+  right there, the rest are under All Playlists, and New Playlist… starts one with that title.
+- **Drag and drop:** drag a poster onto a playlist in the sidebar to add it, or onto New
+  Playlist to start one. The sidebar lists your five most recently changed playlists.
+- **Playlists:** open one to see its titles in order with the total runtime. Drag to reorder,
+  press Delete to remove, and rename, delete or open it in Plex from the toolbar.
+- **Undo:** a banner confirms each change, with Undo when you add a title. Titles already in a
+  playlist aren't added twice.
+
 ## 0.0.4
 
 Sort search results.
