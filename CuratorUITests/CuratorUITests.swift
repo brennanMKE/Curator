@@ -168,6 +168,91 @@ final class CuratorUITests: XCTestCase {
         chooseSort(app, "Title")
     }
 
+    // MARK: Playlists (live; every playlist made is named "Curator UI Test …" and deleted)
+
+    /// Context menu → New Playlist…, then Add to Playlist from the recent shortcuts, Undo,
+    /// open the playlist, remove an entry with Delete, and delete the playlist.
+    @MainActor
+    func testPlaylistFromContextMenu() async throws {
+        let api = try XCTUnwrap(PlexTestAPI(), "no Plex server configured")
+        await api.deleteTestPlaylists()
+        addTeardownBlock { await api.deleteTestPlaylists() }
+
+        let app = try launchWithPlex()
+        let posters = app.buttons.matching(identifier: "poster")
+        XCTAssertTrue(posters.element(boundBy: 1).waitForExistence(timeout: 30))
+        let name = PlexTestAPI.uniqueName()
+
+        // New Playlist… starts the playlist with the first poster's title.
+        chooseFromContextMenu(of: posters.element(boundBy: 0), in: app, path: ["Add to Playlist", "New Playlist…"])
+        let field = app.textFields["newPlaylistName"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        field.click()
+        field.typeKey("a", modifierFlags: .command)
+        field.typeText(name)
+        app.buttons["Create"].click()
+        XCTAssertTrue(banner(containing: "Created \(name)", in: app).waitForExistence(timeout: 15))
+        XCTAssertTrue(app.outlines.staticTexts[name].waitForExistence(timeout: 15), "not in the sidebar")
+
+        // The new playlist is a recent shortcut in Add to Playlist.
+        chooseFromContextMenu(of: posters.element(boundBy: 1), in: app, path: ["Add to Playlist", name])
+        XCTAssertTrue(banner(containing: "to \(name)", in: app).waitForExistence(timeout: 15))
+        try await waitForCount(2, of: name, api: api)
+
+        // Undo takes it back out.
+        app.buttons["Undo"].click()
+        try await waitForCount(1, of: name, api: api)
+
+        // Adding the first title again is reported, not duplicated.
+        chooseFromContextMenu(of: posters.element(boundBy: 0), in: app, path: ["Add to Playlist", name])
+        XCTAssertTrue(banner(containing: "already in \(name)", in: app).waitForExistence(timeout: 15))
+
+        // Add the second again, then open the playlist and remove one with Delete.
+        chooseFromContextMenu(of: posters.element(boundBy: 1), in: app, path: ["Add to Playlist", name])
+        try await waitForCount(2, of: name, api: api)
+        app.outlines.staticTexts[name].click()
+        let entries = app.descendants(matching: .any).matching(identifier: "playlistEntry")
+        XCTAssertTrue(entries.element(boundBy: 1).waitForExistence(timeout: 15))
+        XCTAssertEqual(entries.count, 2)
+        entries.element(boundBy: 0).click()
+        app.typeKey(.delete, modifierFlags: [])
+        try await waitForCount(1, of: name, api: api)
+
+        // Delete the playlist from its toolbar menu.
+        let menu = app.toolbars.menuButtons["Playlist"].firstMatch
+        XCTAssertTrue(menu.waitForExistence(timeout: 10))
+        menu.click()
+        app.menuItems["Delete Playlist…"].click()
+        let confirm = app.buttons["Delete Playlist"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 10))
+        confirm.click()
+        XCTAssertTrue(banner(containing: "Deleted \(name)", in: app).waitForExistence(timeout: 15))
+        let gone = try await api.playlist(named: name)
+        XCTAssertNil(gone, "the playlist is still on the server")
+    }
+
+    /// Dragging a poster onto a playlist in the sidebar adds it.
+    @MainActor
+    func testDragPosterOntoSidebarPlaylist() async throws {
+        let api = try XCTUnwrap(PlexTestAPI(), "no Plex server configured")
+        await api.deleteTestPlaylists()
+        addTeardownBlock { await api.deleteTestPlaylists() }
+        let name = PlexTestAPI.uniqueName()
+        let first = try XCTUnwrap(try await api.movieRatingKeys(1).first)
+        try await api.createPlaylist(named: name, ratingKey: first)
+
+        let app = try launchWithPlex()
+        let posters = app.buttons.matching(identifier: "poster")
+        XCTAssertTrue(posters.firstMatch.waitForExistence(timeout: 30))
+        let target = app.outlines.staticTexts[name]
+        XCTAssertTrue(target.waitForExistence(timeout: 15), "the new playlist isn't in the sidebar")
+
+        // Recently Added's first poster is a different movie from the library's first title.
+        posters.firstMatch.press(forDuration: 0.6, thenDragTo: target, withVelocity: .slow, thenHoldForDuration: 0.4)
+        XCTAssertTrue(banner(containing: "to \(name)", in: app).waitForExistence(timeout: 15), "no confirmation after the drop")
+        try await waitForCount(2, of: name, api: api)
+    }
+
     /// Reproduces the 0.0.1 crash: resizing the window while the poster grid and inspector are
     /// showing threw `_postWindowNeedsUpdateConstraints` inside AppKit's layout pass.
     @MainActor
@@ -203,6 +288,34 @@ final class CuratorUITests: XCTestCase {
     }
 
     // MARK: Helpers
+
+    /// Right-clicks an element and follows a path through the context menu and its submenus.
+    @MainActor
+    private func chooseFromContextMenu(of element: XCUIElement, in app: XCUIApplication, path: [String]) {
+        element.rightClick()
+        for (index, title) in path.enumerated() {
+            let item = app.menuItems[title].firstMatch
+            XCTAssertTrue(item.waitForExistence(timeout: 5), "no \"\(title)\" in the context menu")
+            if index < path.count - 1 { item.hover() } else { item.click() }
+        }
+    }
+
+    @MainActor
+    private func banner(containing text: String, in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts.matching(NSPredicate(format: "identifier == 'playlistBanner' AND (label CONTAINS %@ OR value CONTAINS %@)", text, text)).firstMatch
+    }
+
+    /// Waits for the server to report `count` items in the named playlist.
+    private func waitForCount(_ count: Int, of name: String, api: PlexTestAPI, timeout: Duration = .seconds(15)) async throws {
+        let deadline = ContinuousClock.now + timeout
+        var last = -1
+        while ContinuousClock.now < deadline {
+            last = try await api.playlist(named: name)?.count ?? -1
+            if last == count { return }
+            try await Task.sleep(for: .milliseconds(500))
+        }
+        XCTFail("\(name) has \(last) items on the server, expected \(count)")
+    }
 
     @MainActor
     private func chooseSort(_ app: XCUIApplication, _ item: String) {

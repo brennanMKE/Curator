@@ -3,6 +3,8 @@ import SwiftUI
 enum SidebarItem: Hashable {
     case recentlyAdded
     case library(String)
+    case playlist(String)
+    case allPlaylists
 }
 
 struct FocusSearchAction {
@@ -20,6 +22,8 @@ struct ContentView: View {
     @Environment(LibraryStore.self) private var library
     @Environment(SearchStore.self) private var search
     @Environment(AppNavigation.self) private var navigation
+    @Environment(PlaylistStore.self) private var playlists
+    @State private var newPlaylistCandidate: PlaylistCandidate?
     @State private var sidebarSelection: SidebarItem? = .recentlyAdded
     @State private var selectedItem: PlexItem?
     @State private var showInspector = false
@@ -35,7 +39,7 @@ struct ContentView: View {
             SidebarView(selection: $sidebarSelection)
                 .navigationSplitViewColumnWidth(min: 180, ideal: 210)
         } detail: {
-            MainContent(sidebarSelection: sidebarSelection, selection: $selectedItem)
+            MainContent(sidebarSelection: $sidebarSelection, selection: $selectedItem)
                 .inspector(isPresented: $showInspector) {
                     Group {
                         if let selectedItem {
@@ -52,8 +56,28 @@ struct ContentView: View {
         .focusedSceneValue(\.focusSearch, FocusSearchAction { searchFocused = true })
         .environment(\.itemActions, ItemActions(
             preview: { previewItem = $0 },
-            open: openInPlex
+            open: openInPlex,
+            newPlaylist: { newPlaylistCandidate = $0 }
         ))
+        .sheet(item: $newPlaylistCandidate) { candidate in
+            NewPlaylistSheet(candidate: candidate)
+        }
+        .overlay(alignment: .bottom) {
+            // Scoped animation: only the banner moves.
+            VStack {
+                if let event = playlists.event {
+                    PlaylistBanner(event: event)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(.default, value: playlists.event?.id)
+        }
+        // A playlist deleted here or elsewhere can't stay selected.
+        .onChange(of: playlists.playlists.map(\.id)) {
+            if case .playlist(let id) = sidebarSelection, playlists.hasLoaded, playlists.playlist(id) == nil {
+                sidebarSelection = .recentlyAdded
+            }
+        }
         .sheet(item: $previewItem) { item in
             ItemPreview(item: item)
                 .environment(\.itemActions, ItemActions(open: openInPlex))
@@ -107,7 +131,7 @@ extension ContentView {
 
 /// Everything needs a working Plex connection; until then, show how to get one.
 private struct MainContent: View {
-    let sidebarSelection: SidebarItem?
+    @Binding var sidebarSelection: SidebarItem?
     @Binding var selection: PlexItem?
 
     @Environment(AppModel.self) private var model
@@ -153,6 +177,11 @@ private struct MainContent: View {
                     } else {
                         ContentUnavailableView("Library Not Found", systemImage: "questionmark.folder")
                     }
+                case .playlist(let id):
+                    PlaylistDetailView(playlistID: id, selection: $selection)
+                        .id(id)
+                case .allPlaylists:
+                    AllPlaylistsView { sidebarSelection = .playlist($0) }
                 }
             }
         }

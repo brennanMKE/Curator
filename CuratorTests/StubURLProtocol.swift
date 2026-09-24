@@ -1,5 +1,11 @@
 import Foundation
+import Testing
 @testable import Curator
+
+/// Every suite that uses StubURLProtocol nests in here: its routes are shared, so these suites
+/// must not run at the same time as each other.
+@Suite(.serialized)
+enum StubbedNetworkTests {}
 
 /// Serves canned Plex responses with per-request delays, and records every request.
 /// Tests using it must be serialized: the routes are shared.
@@ -12,15 +18,19 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     private static let lock = NSLock()
     nonisolated(unsafe) private static var router: (URLRequest) -> Route? = { _ in nil }
     nonisolated(unsafe) private static var log: [URL] = []
+    nonisolated(unsafe) private static var methodLog: [String] = []
 
     static func route(_ router: @escaping (URLRequest) -> Route?) {
         lock.withLock {
             self.router = router
             log = []
+            methodLog = []
         }
     }
 
     static var requests: [URL] { lock.withLock { log } }
+    /// "METHOD /path" for each request, in order.
+    static var calls: [String] { lock.withLock { zip(methodLog, log).map { "\($0) \($1.path())" } } }
 
     static func session() -> URLSession {
         let configuration = URLSessionConfiguration.ephemeral
@@ -35,7 +45,10 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
 
     override func startLoading() {
         let route = Self.lock.withLock {
-            if let url = request.url { Self.log.append(url) }
+            if let url = request.url {
+                Self.log.append(url)
+                Self.methodLog.append(request.httpMethod ?? "GET")
+            }
             return Self.router(request)
         }
         let seconds = route.map { Double($0.delay.components.attoseconds) / 1e18 + Double($0.delay.components.seconds) } ?? 0

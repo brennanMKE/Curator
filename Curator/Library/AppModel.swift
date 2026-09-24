@@ -22,6 +22,7 @@ final class AppModel {
     let recent: RecentStore
     let search = SearchStore()
     let details = ItemDetailStore()
+    let playlists = PlaylistStore()
 
     /// How Movies and TV Shows are ordered; one choice for both, remembered across launches.
     var librarySort: LibrarySort {
@@ -54,6 +55,10 @@ final class AppModel {
         recent.context = context
         search.context = context
         details.context = context
+        playlists.context = { [weak self] in
+            guard let self, let context = plexContext, let server = library.server else { return nil }
+            return PlaylistContext(client: context.client, machineIdentifier: server.machineIdentifier)
+        }
         settings.onChange = { [weak self] change in
             switch change {
             case .plex: self?.connect(after: Self.settingsDebounce)
@@ -138,6 +143,7 @@ final class AppModel {
             if keys.contains(key) { store.reload() } else { browseStores[key] = nil }
         }
         search.rerun()
+        playlists.reload()
 
         // A different server means a different library: start Recently Added over.
         let serverID = library.server?.machineIdentifier

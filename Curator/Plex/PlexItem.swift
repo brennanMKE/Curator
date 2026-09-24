@@ -28,6 +28,9 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
     let parentIndex: Int?
     let index: Int?
 
+    /// Set on items listed from a playlist: identifies this entry for removing or moving it.
+    let playlistItemID: String?
+
     // Hub search: why this item matched ("director", "Joel Coen").
     let reason: String?
     let reasonTitle: String?
@@ -81,7 +84,7 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
         case ratingKey, type, title, titleSort, year, summary, tagline, contentRating, audienceRating, duration
         case addedAt, originallyAvailableAt, thumb, art, librarySectionID
         case grandparentTitle, grandparentThumb, grandparentArt, parentIndex, index
-        case reason, reasonTitle
+        case reason, reasonTitle, playlistItemID
         case guids = "Guid"
         case genres = "Genre"
         case directors = "Director"
@@ -111,6 +114,12 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
         grandparentArt = try c.decodeIfPresent(String.self, forKey: .grandparentArt)
         parentIndex = try c.decodeIfPresent(Int.self, forKey: .parentIndex)
         index = try c.decodeIfPresent(Int.self, forKey: .index)
+        // A number in Plex's JSON; kept as a string like the other identifiers.
+        if let number = try? c.decodeIfPresent(Int.self, forKey: .playlistItemID) {
+            playlistItemID = String(number)
+        } else {
+            playlistItemID = try c.decodeIfPresent(String.self, forKey: .playlistItemID)
+        }
         reason = try c.decodeIfPresent(String.self, forKey: .reason)
         reasonTitle = try c.decodeIfPresent(String.self, forKey: .reasonTitle)
         guids = try c.decodeIfPresent([GuidTag].self, forKey: .guids)?.map(\.id) ?? []

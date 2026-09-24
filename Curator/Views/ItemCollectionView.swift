@@ -16,6 +16,8 @@ struct ItemSection: Identifiable {
 struct ItemActions {
     var preview: (PlexItem) -> Void = { _ in }
     var open: (PlexItem) -> Void = { _ in }
+    /// Opens the New Playlist sheet starting with this title.
+    var newPlaylist: (PlaylistCandidate) -> Void = { _ in }
 }
 
 extension EnvironmentValues {
@@ -79,6 +81,7 @@ private struct PosterGridView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityIdentifier("poster")
+                                .draggable(PlaylistCandidate(item)) { DragPreview(title: item.displayTitle) }
                                 .contextMenu { ItemContextMenu(item: item) }
                                 .onAppear {
                                     if item.id == sections.last?.items.last?.id { onReachEnd?() }
@@ -227,6 +230,7 @@ private struct ItemListView: View {
                         ForEach(section.items) { item in
                             ItemRow(item: item, subtitle: subtitle(item), isNew: isNew(item))
                                 .tag(item.id)
+                                .draggable(PlaylistCandidate(item)) { DragPreview(title: item.displayTitle) }
                                 .onAppear {
                                     if item.id == sections.last?.items.last?.id { onReachEnd?() }
                                 }
@@ -331,6 +335,8 @@ struct ItemContextMenu: View {
         Button("Open in Plex") { actions.open(item) }
         Button("Quick Look") { actions.preview(item) }
         Divider()
+        AddToPlaylistMenu(candidate: PlaylistCandidate(item))
+        Divider()
         Button("Copy Title") { copy(item.displayTitle) }
         if let path = item.filePath {
             Button("Copy File Path") { copy(path) }
@@ -340,5 +346,45 @@ struct ItemContextMenu: View {
     private func copy(_ text: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+    }
+}
+
+/// Add to Playlist ▸ the 3 most recently changed, All Playlists ▸ (when there are more), and
+/// New Playlist….
+struct AddToPlaylistMenu: View {
+    let candidate: PlaylistCandidate
+
+    @Environment(PlaylistStore.self) private var playlists
+    @Environment(\.itemActions) private var actions
+
+    var body: some View {
+        Menu("Add to Playlist") {
+            ForEach(playlists.recent) { playlist in
+                Button(playlist.title) { playlists.add(candidate, to: playlist) }
+            }
+            if playlists.playlists.count > PlaylistStore.recentCount {
+                Divider()
+                Menu("All Playlists") {
+                    ForEach(playlists.alphabetical) { playlist in
+                        Button(playlist.title) { playlists.add(candidate, to: playlist) }
+                    }
+                }
+            }
+            if !playlists.playlists.isEmpty { Divider() }
+            Button("New Playlist…") { actions.newPlaylist(candidate) }
+        }
+    }
+}
+
+/// What follows the pointer while dragging a title.
+struct DragPreview: View {
+    let title: String
+
+    var body: some View {
+        Label(title, systemImage: "film")
+            .font(.callout.weight(.medium))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(.regularMaterial, in: .capsule)
     }
 }

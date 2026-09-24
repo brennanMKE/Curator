@@ -7,6 +7,19 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>co.sstools.curator.item</string>
+			<key>UTTypeDescription</key>
+			<string>Curator library item</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+		</dict>
+	</array>
 	<key>SUFeedURL</key>
 	<string>$(SU_FEED_URL)</string>
 	<key>SUPublicEDKey</key>

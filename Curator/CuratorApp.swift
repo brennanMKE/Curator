@@ -17,6 +17,7 @@ struct CuratorApp: App {
                 .environment(model.recent)
                 .environment(model.search)
                 .environment(model.details)
+                .environment(model.playlists)
                 .environment(artwork)
                 .environment(navigation)
         }
