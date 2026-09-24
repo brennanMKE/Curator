@@ -100,6 +100,12 @@ extension PlexSection {
     }
 }
 
+extension PlexGenre {
+    static func stub(key: String, title: String) -> PlexGenre {
+        try! JSONDecoder().decode(PlexGenre.self, from: Data(#"{"key":"\#(key)","title":"\#(title)"}"#.utf8))
+    }
+}
+
 /// Polls until `condition` holds or the timeout passes.
 @MainActor
 func eventually(timeout: Duration = .seconds(3), _ condition: () -> Bool) async -> Bool {

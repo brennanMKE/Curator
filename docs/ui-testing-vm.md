@@ -148,6 +148,7 @@ row in the list), `playlistEntry` (a playlist's titles, in either layout) and `d
 | `testArrowKeysMoveSelectionAndSpacePreviews` | yes | → changes the selected title; Space opens the preview; Escape closes it |
 | `testArrowKeysMoveSelectionInTheList` | yes | In the list layout, ↓ and ↑ move the selected title |
 | `testPlaylistGridAndListReorder` | yes | A 3-title playlist in grid and list: arrows move, dragging the first entry onto the last reorders it on the server |
+| `testFilteringALibraryByGenre` | yes | Movies' Genre menu lists counted genres; the smallest shows exactly its count of posters, and All Genres brings the rest back |
 | `testSearchShowsNoResultsForAnUnknownTitle` | yes | ⌘F, typing, and the No Results state |
 | `testMenuBarWindowShowsItsControls` | no | The status item opens the panel with Open Curator, Settings and Quit (screenshot kept) |
 | `testMenuBarWindowListsTheLatestImports` | yes | At most 5 rows, none overlapping the header or footer (screenshot kept) |

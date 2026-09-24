@@ -214,6 +214,47 @@ final class CuratorUITests: XCTestCase {
         chooseSort(app, "Title")   // leave the remembered sort as it was
     }
 
+    /// The Genre menu lists the library's genres with counts, and choosing one shows only its
+    /// titles. Uses the smallest genre, so every one of its posters is on screen to count.
+    @MainActor
+    func testFilteringALibraryByGenre() throws {
+        let app = try launchWithPlex()
+        let posters = app.buttons.matching(identifier: "poster")
+        XCTAssertTrue(posters.firstMatch.waitForExistence(timeout: 30))
+        let movies = app.outlines.staticTexts["Movies"]
+        XCTAssertTrue(movies.waitForExistence(timeout: 10))
+        movies.click()
+
+        let menu = app.toolbars.menuButtons["genreMenu"].firstMatch
+        XCTAssertTrue(menu.waitForExistence(timeout: 10))
+        // Counts arrive after the genre names; wait for them.
+        var counted: [(title: String, count: Int)] = []
+        let deadline = Date.now.addingTimeInterval(20)
+        while counted.isEmpty, Date.now < deadline {
+            menu.click()
+            counted = app.menuItems.allElementsBoundByIndex.compactMap { item in
+                let title = item.title
+                guard let open = title.lastIndex(of: "("), title.hasSuffix(")"),
+                      let count = Int(title[title.index(after: open)..<title.index(before: title.endIndex)])
+                else { return nil }
+                return (title, count)
+            }
+            if counted.isEmpty { app.typeKey(.escape, modifierFlags: []) }
+        }
+        let smallest = try XCTUnwrap(counted.min { $0.count < $1.count }, "the Genre menu shows no counted genres")
+        try XCTSkipIf(smallest.count > 6, "every genre has more titles than fit on screen")
+        app.menuItems[smallest.title].click()
+
+        let filtered = NSPredicate(format: "count == %d", smallest.count)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: filtered, evaluatedWith: posters)], timeout: 15), .completed,
+                       "\(smallest.title): \(posters.count) posters")
+
+        menu.click()
+        app.menuItems["All Genres"].click()
+        let all = NSPredicate(format: "count > %d", smallest.count)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: all, evaluatedWith: posters)], timeout: 15), .completed, "All Genres didn't bring the rest back")
+    }
+
     /// Search results can be sorted with the same Sort menu.
     @MainActor
     func testSortingSearchResultsByReleaseDate() throws {

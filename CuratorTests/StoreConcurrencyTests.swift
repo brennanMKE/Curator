@@ -101,6 +101,44 @@ extension StubbedNetworkTests {
             #expect(StubURLProtocol.requests.compactMap { Stub.query(URLRequest(url: $0), "sort") }.last == "originallyAvailableAt:desc")
         }
 
+        @Test func choosingAGenreFiltersOnTheServer() async {
+            StubURLProtocol.route { request in
+                Stub.query(request, "genre") == "219"
+                    ? .init(json: Stub.items([("2", "Die Hard")], total: 1))
+                    : .init(json: Stub.items([("1", "Amélie"), ("2", "Die Hard")]))
+            }
+            let store = BrowseStore(section: Stub.movies)
+            store.context = { Stub.context() }
+            store.loadIfNeeded()
+            #expect(await eventually { store.items.count == 2 })
+
+            store.setGenre(PlexGenre.stub(key: "219", title: "Action"))
+            #expect(await eventually { store.items.map(\.title) == ["Die Hard"] })
+            #expect(store.totalSize == 1)
+
+            store.setGenre(nil)
+            #expect(await eventually { store.items.count == 2 })
+            #expect(StubURLProtocol.requests.last.flatMap { Stub.query(URLRequest(url: $0), "genre") } == nil)
+        }
+
+        @Test func genresLoadWithTheirCounts() async {
+            StubURLProtocol.route { request in
+                if request.url?.path() == "/library/sections/4/genre" {
+                    return .init(json: #"{"MediaContainer":{"size":3,"Directory":[{"key":"219","title":"Action"},{"key":"5","title":"Comedy"},{"key":"9","title":"Western"}]}}"#)
+                }
+                let total = ["219": 29, "5": 12, "9": 0][Stub.query(request, "genre") ?? ""] ?? 0
+                return .init(json: #"{"MediaContainer":{"size":0,"totalSize":\#(total)}}"#)
+            }
+            let store = BrowseStore(section: Stub.movies)
+            store.context = { Stub.context() }
+            store.loadGenresIfNeeded()
+            #expect(await eventually { store.genreCounts.count == 3 })
+            #expect(store.genres.map(\.title) == ["Action", "Comedy", "Western"])
+            #expect(store.genreCounts == ["219": 29, "5": 12, "9": 0])
+            // Counting asks only for totals.
+            #expect(StubURLProtocol.requests.filter { $0.path() == "/library/sections/4/all" }.count == 3)
+        }
+
         @Test func detailsLandOnTheirOwnItem() async {
             StubURLProtocol.route { request in
                 let key = request.url?.lastPathComponent ?? ""

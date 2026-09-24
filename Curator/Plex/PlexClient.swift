@@ -21,16 +21,25 @@ nonisolated struct PlexClient: Sendable {
         try await get("/library/sections", as: PlexSectionList.self).sections
     }
 
-    /// The number of top-level items (movies, shows) in a section, without fetching them.
-    func itemCount(in section: PlexSection) async throws -> Int {
-        let counts = try await get("/library/sections/\(section.key)/all", as: PlexCount.self, page: Page(start: 0, size: 0))
+    /// The number of top-level items (movies, shows) in a section, or in one of its genres,
+    /// without fetching them.
+    func itemCount(in section: PlexSection, genre: PlexGenre? = nil) async throws -> Int {
+        let query = genre.map { [URLQueryItem(name: "genre", value: $0.key)] } ?? []
+        let counts = try await get("/library/sections/\(section.key)/all", as: PlexCount.self, query: query, page: Page(start: 0, size: 0))
         return counts.totalSize ?? counts.size
     }
 
-    /// A section's items in the given order. For TV, `episodes` lists episodes rather than
-    /// shows, which is what "recently added" means there: a new episode doesn't re-date its show.
-    func items(in section: PlexSection, sort: LibrarySort, episodes: Bool = false, page: Page) async throws -> PlexItemList {
+    /// The genres in a section, A to Z.
+    func genres(in section: PlexSection) async throws -> [PlexGenre] {
+        try await get("/library/sections/\(section.key)/genre", as: PlexGenreList.self).genres
+    }
+
+    /// A section's items in the given order, optionally only one genre (Plex filters). For TV,
+    /// `episodes` lists episodes rather than shows, which is what "recently added" means there:
+    /// a new episode doesn't re-date its show.
+    func items(in section: PlexSection, sort: LibrarySort, genre: PlexGenre? = nil, episodes: Bool = false, page: Page) async throws -> PlexItemList {
         var query = [URLQueryItem(name: "sort", value: sort.plexValue), URLQueryItem(name: "includeGuids", value: "1")]
+        if let genre { query.append(URLQueryItem(name: "genre", value: genre.key)) }
         if episodes { query.append(URLQueryItem(name: "type", value: "4")) }
         return try await get("/library/sections/\(section.key)/all", as: PlexItemList.self, query: query, page: page)
     }

@@ -13,7 +13,8 @@ built for the moment you're ripping and importing discs and want to see them lan
   NEW, and shows a banner when a title arrives.
 - **Search** by title, and also by actor or director ("Coen" finds *Fargo* and *The Big
   Lebowski*). Matches on cast or crew say why they matched.
-- **Browse** each library in title order.
+- **Browse** each library, sorted by title, release date, date added or rating, and filtered
+  to one genre with the toolbar's Genre menu.
 - **Details inspector** for the selected title: artwork, summary, runtime, cast, when it
   was added, video and audio format, and the file path and size on the server.
 - **Playlists:** right-click a poster and choose Add to Playlist, or drag it onto a playlist in

@@ -55,6 +55,28 @@ nonisolated struct PlexSection: Decodable, Sendable, Hashable, Identifiable {
     }
 }
 
+/// `GET /library/sections/{key}/genre`: the genres Plex found in a library's titles.
+nonisolated struct PlexGenreList: Decodable, Sendable {
+    let genres: [PlexGenre]
+
+    enum CodingKeys: String, CodingKey {
+        case genres = "Directory"
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        genres = try container.decodeIfPresent([PlexGenre].self, forKey: .genres) ?? []
+    }
+}
+
+/// A genre within one library. `key` is what `all?genre=` filters on.
+nonisolated struct PlexGenre: Decodable, Sendable, Hashable, Identifiable {
+    let key: String
+    let title: String
+
+    var id: String { key }
+}
+
 /// Any paged listing requested with `X-Plex-Container-Size: 0`: only the counts come back.
 nonisolated struct PlexCount: Decodable, Sendable {
     let size: Int

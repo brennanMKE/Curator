@@ -140,7 +140,12 @@ final class AppModel {
 
         let keys = Set(library.sections.map(\.key))
         for (key, store) in browseStores {
-            if keys.contains(key) { store.reload() } else { browseStores[key] = nil }
+            if keys.contains(key) {
+                store.reload()
+                store.loadGenres()
+            } else {
+                browseStores[key] = nil
+            }
         }
         search.rerun()
         playlists.reload()

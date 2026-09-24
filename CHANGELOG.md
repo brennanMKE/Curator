@@ -3,6 +3,12 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
+## Unreleased
+
+- **Genres:** each library has a Genre menu in the toolbar, listing the genres Plex found in
+  its titles with how many are in each. Choose one to see only those titles; sorting still
+  works. All Genres shows everything again.
+
 ## 0.1.1
 
 Playlists as a grid, and arrow keys in lists.
