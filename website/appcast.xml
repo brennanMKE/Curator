@@ -7,6 +7,16 @@
     <language>en</language>
     <!-- ITEMS: scripts/update-website.sh adds each release here, newest first. Don't edit by hand. -->
     <item>
+      <title>0.1.3</title>
+      <pubDate>Thu, 24 Sep 2026 07:05:53 +0000</pubDate>
+      <sparkle:version>202609240704</sparkle:version>
+      <sparkle:shortVersionString>0.1.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://curator.sstools.co/changelog.html#v0-1-3</sparkle:releaseNotesLink>
+      <description><![CDATA[<p>See what's playing, and Delete works in playlists again.</p><ul><li><b>Now playing:</b> a poster shows a small play or pause badge in its corner while that title is playing on any Plex player. Hover the poster to see which one ("Paused on Apple TV"). Episodes mark their show too. It checks every 10 seconds, and it's display only.</li><li><b>Fixed:</b> the Delete key didn't remove a title from a playlist in 0.1.1 and 0.1.2. It does again, and so does Edit ▸ Delete.</li></ul>]]></description>
+      <enclosure url="https://curator.sstools.co/downloads/Curator-0.1.3.dmg" length="4360783" type="application/octet-stream" sparkle:edSignature="Ki2wuaZCPQxUfUZKUBLlVIRY4K34cZV17/kKDMPw2CPmK7sDXdt8iEdvy1RIi1su1K6LNMKPFROlZiyGxHp0Aw=="/>
+    </item>
+    <item>
       <title>0.1.2</title>
       <pubDate>Thu, 24 Sep 2026 05:14:53 +0000</pubDate>
       <sparkle:version>202609240513</sparkle:version>
