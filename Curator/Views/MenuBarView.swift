@@ -173,6 +173,7 @@ private struct MenuBarRow: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        .help(ItemTooltip.text(for: item, nowPlaying: nowPlaying))
         .accessibilityIdentifier("menuBarRow")
         .onHover { isHovered = $0 }
     }

@@ -267,6 +267,7 @@ private struct CollectionCell: View {
             }
         }
         .buttonStyle(.plain)
+        .help(ItemTooltip.text(for: item, nowPlaying: nowPlaying.state(for: item)))
         .simultaneousGesture(TapGesture(count: 2).onEnded { actions.open(item) })
         .accessibilityIdentifier(identifier)
         .id(item.entryID)
@@ -333,7 +334,6 @@ struct PosterCard: View {
             }
         }
         .contentShape(.rect)
-        .help(item.displayTitle)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -402,7 +402,15 @@ struct NewBadge: View {
     }
 }
 
-/// Play or pause, in Plex gold like the NEW badge; the tooltip names the player.
+/// A title's tooltip: its name, and where it's playing. A tooltip on the badge itself never
+/// shows, because the poster's own tooltip covers it.
+enum ItemTooltip {
+    static func text(for item: PlexItem, nowPlaying: NowPlaying?) -> String {
+        [item.displayTitle, nowPlaying?.description].compactMap(\.self).joined(separator: "\n")
+    }
+}
+
+/// Play or pause, in Plex gold like the NEW badge. The poster's tooltip names the player.
 struct NowPlayingBadge: View {
     let nowPlaying: NowPlaying
 
@@ -413,7 +421,6 @@ struct NowPlayingBadge: View {
             .background(.tint, in: .circle)
             .foregroundStyle(Color(white: 0.1))
             .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
-            .help(nowPlaying.description)
             .accessibilityLabel(nowPlaying.description)
             .accessibilityIdentifier("nowPlayingBadge")
     }
