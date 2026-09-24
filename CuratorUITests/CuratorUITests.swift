@@ -249,8 +249,13 @@ final class CuratorUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: filtered, evaluatedWith: posters)], timeout: 15), .completed,
                        "\(smallest.title): \(posters.count) posters")
 
-        menu.click()
-        app.menuItems["All Genres"].click()
+        // A second click on a toolbar menu sometimes doesn't leave it open in the VM; retry.
+        let allGenres = app.menuItems["All Genres"]
+        for _ in 0..<3 where !allGenres.exists {
+            menu.click()
+            _ = allGenres.waitForExistence(timeout: 3)
+        }
+        allGenres.click()
         let all = NSPredicate(format: "count > %d", smallest.count)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: all, evaluatedWith: posters)], timeout: 15), .completed, "All Genres didn't bring the rest back")
     }

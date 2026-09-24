@@ -73,14 +73,19 @@ struct ItemCollectionView: View {
             .focusable()
             .focused($isFocused)
             .focusEffectDisabled()
-            .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow, .return, .space, .delete, .deleteForward]) { press in
+            .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow, .return, .space, .delete, .deleteForward, Self.backspace]) { press in
                 handle(press.key, proxy: proxy)
             }
+            // Edit ▸ Delete, and the Delete key if it arrives as a command rather than a key.
+            .onDeleteCommand { _ = handle(.delete, proxy: proxy) }
             .onChange(of: scrollToTop) {
                 withAnimation { proxy.scrollTo("top", anchor: .top) }
             }
         }
     }
+
+    /// The Mac's Delete key types U+007F; SwiftUI's `.delete` is U+0008, which it doesn't send.
+    private static let backspace = KeyEquivalent("\u{7F}")
 
     private func cell(_ item: PlexItem, _ index: Int) -> CollectionCell {
         CollectionCell(
@@ -109,7 +114,7 @@ struct ItemCollectionView: View {
         case .space:
             guard let selection else { return .ignored }
             actions.preview(selection)
-        case .delete, .deleteForward:
+        case .delete, .deleteForward, Self.backspace:
             guard let editing, let selection else { return .ignored }
             // Keep a selection so Delete can be pressed again: the next title, or the one before.
             let items = sections.flatMap(\.items)
