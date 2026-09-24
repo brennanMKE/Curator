@@ -3,6 +3,16 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
+## 0.0.4
+
+Sort search results.
+
+- **Search results** now have the same Sort menu as your libraries, and share its setting.
+  Title matches and cast/crew matches are sorted separately, and cast/crew matches still say
+  why they matched.
+- Titles sort the way Plex does, so "The Big Lebowski" files under B. Titles with no rating or
+  release date go last.
+
 ## 0.0.3
 
 Sort your libraries.
