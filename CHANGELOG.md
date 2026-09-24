@@ -3,11 +3,15 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
-## Unreleased
+## 0.1.3
+
+See what's playing, and Delete works in playlists again.
 
 - **Now playing:** a poster shows a small play or pause badge in its corner while that title
-  is playing on any Plex player; hover the poster to see which one ("Paused on Apple TV"). Episodes
-  mark their show too. It checks every 10 seconds, and it's display only.
+  is playing on any Plex player. Hover the poster to see which one ("Paused on Apple TV").
+  Episodes mark their show too. It checks every 10 seconds, and it's display only.
+- **Fixed:** the Delete key didn't remove a title from a playlist in 0.1.1 and 0.1.2. It
+  does again, and so does Edit ▸ Delete.
 
 ## 0.1.2
 
