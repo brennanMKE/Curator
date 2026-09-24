@@ -223,8 +223,9 @@ final class CuratorUITests: XCTestCase {
         XCTAssertTrue(menu.waitForExistence(timeout: 10))
         menu.click()
         app.menuItems["Delete Playlist…"].click()
-        let confirm = app.buttons["Delete Playlist"].firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10))
+        // The confirmation is a sheet; its button also has a Touch Bar twin, so look in the sheet.
+        let confirm = app.sheets.buttons["Delete Playlist"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "no delete confirmation")
         confirm.click()
         XCTAssertTrue(banner(containing: "Deleted \(name)", in: app).waitForExistence(timeout: 15))
         let gone = try await api.playlist(named: name)
