@@ -48,6 +48,11 @@ cleanup() {
   local rc=$?
   trap - EXIT
   log "Cleaning up (exit $rc)"
+  # Give the Tart slot back before the slower teardown. Not fatal if missed:
+  # leases are pid-stamped and the next acquire prunes ours.
+  if [[ -n "${LEASE_ID:-}" ]]; then
+    tart-lease release --id "$LEASE_ID" 2>/dev/null || true
+  fi
   if [[ -n "${MEMORY_REQUEST_ID:-}" && -n "${MEMORY_COORD_DIR:-}" ]]; then
     mkdir -p "$MEMORY_COORD_DIR/release" 2>/dev/null || true
     print -r -- "{\"id\": \"$MEMORY_REQUEST_ID\", \"released\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" \
@@ -57,6 +62,7 @@ cleanup() {
   tart delete "$CLONE" >/dev/null 2>&1 || true
   rm -rf "$EXPORT"
 }
+LEASE_ID=""
 trap cleanup EXIT
 
 # --- Preflight ---------------------------------------------------------------
@@ -153,6 +159,18 @@ elif [[ -f "$REPO/.env" ]]; then
   } > "$EXPORT/uitest.env"
 else
   log "No .env in the repo: live tests will skip"
+fi
+
+# --- Wait for a Tart slot ----------------------------------------------------
+# One host, several repos and sessions. `tart-lease` admits at most two guests
+# and only grants the second when memory allows. Acquired after the
+# memory-signal work so it sees memory the observer just freed.
+# See Homelab protocols/tart-lease/PROTOCOL.md
+
+if command -v tart-lease >/dev/null; then
+  LEASE_ID=$(tart-lease acquire --label curator --pid $$)
+else
+  log "WARNING: tart-lease not on PATH — running without admission control"
 fi
 
 # --- Clone and boot ----------------------------------------------------------
