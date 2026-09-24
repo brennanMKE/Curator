@@ -3,7 +3,7 @@
 A native macOS companion to Plex for browsing your library and watching new imports arrive.
 
 Curator connects to a Plex Media Server on your network. It shows what was just added,
-searches titles, cast and crew, and tells you exactly which file Plex is playing. It's
+searches titles, cast and crew, and shows where each title's file is on the server. It's
 built for the moment you're ripping and importing discs and want to see them land.
 
 ## Features
