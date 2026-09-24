@@ -7,6 +7,16 @@
     <language>en</language>
     <!-- ITEMS: scripts/update-website.sh adds each release here, newest first. Don't edit by hand. -->
     <item>
+      <title>0.0.4</title>
+      <pubDate>Thu, 24 Sep 2026 00:22:35 +0000</pubDate>
+      <sparkle:version>202609240021</sparkle:version>
+      <sparkle:shortVersionString>0.0.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://curator.sstools.co/changelog.html#v0-0-4</sparkle:releaseNotesLink>
+      <description><![CDATA[<p>Sort search results.</p><ul><li><b>Search results</b> now have the same Sort menu as your libraries, and share its setting. Title matches and cast/crew matches are sorted separately, and cast/crew matches still say why they matched.</li><li>Titles sort the way Plex does, so "The Big Lebowski" files under B. Titles with no rating or release date go last.</li></ul>]]></description>
+      <enclosure url="https://curator.sstools.co/downloads/Curator-0.0.4.dmg" length="4025867" type="application/octet-stream" sparkle:edSignature="gKUCOjpExq5klrDCYq8+HgAsSUU4viwjS3OEPt5v3LJxsYFc63qfSw7ybMzIISe0TdxLf6dWtLY+xnF5pYHIDw=="/>
+    </item>
+    <item>
       <title>0.0.3</title>
       <pubDate>Wed, 23 Sep 2026 23:29:50 +0000</pubDate>
       <sparkle:version>202609232328</sparkle:version>
