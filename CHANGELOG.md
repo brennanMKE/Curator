@@ -3,6 +3,13 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
+## Unreleased
+
+- **Playlists as a grid:** a playlist now follows the grid/list switch in the toolbar, like
+  everywhere else. In either layout, drag a title onto another to move it there.
+- **Arrow keys in the list:** ↑ and ↓ move through the list again, in every view. Double-click
+  a title to open it in Plex, in the grid or the list.
+
 ## 0.1.0
 
 Playlists. Build a Die Hard marathon in a few clicks, and play it on any Plex app, including

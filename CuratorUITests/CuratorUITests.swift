@@ -111,6 +111,74 @@ final class CuratorUITests: XCTestCase {
         XCTAssertTrue(close.waitForNonExistence(timeout: 10))
     }
 
+    /// The list layout takes arrow keys too (0.1.0's List ignored them once rows were draggable).
+    @MainActor
+    func testArrowKeysMoveSelectionInTheList() throws {
+        let app = try launchWithPlex(viewMode: "list")
+        let rows = app.buttons.matching(identifier: "itemRow")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 30))
+        try XCTSkipIf(rows.count < 3, "need three titles to move between")
+
+        rows.firstMatch.click()
+        let title = app.staticTexts["detailTitle"]
+        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        let first = title.value as? String ?? ""
+
+        app.typeKey(.downArrow, modifierFlags: [])
+        let moved = NSPredicate(format: "value != %@", first)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: moved, evaluatedWith: title)], timeout: 10), .completed, "↓ didn't move")
+        app.typeKey(.upArrow, modifierFlags: [])
+        let back = NSPredicate(format: "value == %@", first)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: back, evaluatedWith: title)], timeout: 10), .completed, "↑ didn't move back")
+    }
+
+    /// A playlist follows the grid/list choice; in both, arrow keys move and dragging one entry
+    /// onto another reorders it on the server.
+    @MainActor
+    func testPlaylistGridAndListReorder() async throws {
+        let api = try XCTUnwrap(PlexTestAPI(), "no Plex server configured")
+        await api.deleteTestPlaylists()
+        addTeardownBlock { await api.deleteTestPlaylists() }
+        let name = PlexTestAPI.uniqueName()
+        let keys = try await api.movieRatingKeys(3)
+        try XCTSkipIf(keys.count < 3, "need three movies")
+        try await api.createPlaylist(named: name, ratingKeys: keys)
+        let playlist = try await api.playlist(named: name)
+        let id = try XCTUnwrap(playlist?.id)
+
+        for mode in ["grid", "list"] {
+            let app = try launchWithPlex(viewMode: mode)
+            let sidebarRow = app.outlines.staticTexts[name]
+            XCTAssertTrue(sidebarRow.waitForExistence(timeout: 30), "the playlist isn't in the sidebar")
+            sidebarRow.click()
+            let entries = app.buttons.matching(identifier: "playlistEntry")
+            XCTAssertTrue(entries.element(boundBy: 2).waitForExistence(timeout: 15), "\(mode): entries didn't load")
+            XCTAssertEqual(entries.count, 3)
+
+            // Arrow keys move the selection: → in the grid, ↓ in the list.
+            entries.element(boundBy: 0).click()
+            let title = app.staticTexts["detailTitle"]
+            XCTAssertTrue(title.waitForExistence(timeout: 10))
+            let first = title.value as? String ?? ""
+            app.typeKey(mode == "grid" ? .rightArrow : .downArrow, modifierFlags: [])
+            let moved = NSPredicate(format: "value != %@", first)
+            XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: moved, evaluatedWith: title)], timeout: 10), .completed, "\(mode): arrow didn't move")
+
+            // Drag the first entry onto the last: it moves to the end.
+            let before = try await api.itemKeys(of: id)
+            entries.element(boundBy: 0).press(forDuration: 0.6, thenDragTo: entries.element(boundBy: 2), withVelocity: .slow, thenHoldForDuration: 0.4)
+            let expected = Array(before.dropFirst()) + [before[0]]
+            let deadline = ContinuousClock.now + .seconds(15)
+            var order = before
+            while ContinuousClock.now < deadline, order != expected {
+                try await Task.sleep(for: .milliseconds(500))
+                order = try await api.itemKeys(of: id)
+            }
+            XCTAssertEqual(order, expected, "\(mode): dragging didn't reorder the playlist")
+            app.terminate()
+        }
+    }
+
     /// The TMDB key from .env is really accepted, so artwork comes from TMDB rather than silently
     /// falling back to Plex's posters.
     @MainActor
@@ -211,7 +279,7 @@ final class CuratorUITests: XCTestCase {
         chooseFromContextMenu(of: posters.element(boundBy: 1), in: app, path: ["Add to Playlist", name])
         try await waitForCount(2, of: name, api: api)
         app.outlines.staticTexts[name].click()
-        let entries = app.descendants(matching: .any).matching(identifier: "playlistEntry")
+        let entries = app.buttons.matching(identifier: "playlistEntry")
         XCTAssertTrue(entries.element(boundBy: 1).waitForExistence(timeout: 15))
         XCTAssertEqual(entries.count, 2)
         entries.element(boundBy: 0).click()
@@ -362,17 +430,17 @@ final class CuratorUITests: XCTestCase {
     }
 
     @MainActor
-    private func launch(environment: [String: String] = [:]) -> XCUIApplication {
+    private func launch(environment: [String: String] = [:], viewMode: String = "grid") -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["CURATOR_UI_TEST"] = "1"
         app.launchEnvironment.merge(environment) { _, new in new }
-        app.launchArguments += ["-viewMode", "grid"]
+        app.launchArguments += ["-viewMode", viewMode]
         app.launch()
         return app
     }
 
     @MainActor
-    private func launchWithPlex() throws -> XCUIApplication {
+    private func launchWithPlex(viewMode: String = "grid") throws -> XCUIApplication {
         let environment = ProcessInfo.processInfo.environment
         guard let url = environment["CURATOR_PLEX_URL"], !url.isEmpty,
               let token = environment["CURATOR_PLEX_TOKEN"], !token.isEmpty
@@ -383,7 +451,7 @@ final class CuratorUITests: XCTestCase {
             "CURATOR_PLEX_URL": url,
             "CURATOR_PLEX_TOKEN": token,
             "CURATOR_TMDB_API_KEY": environment["CURATOR_TMDB_API_KEY"] ?? "",
-        ])
+        ], viewMode: viewMode)
     }
 
     @MainActor

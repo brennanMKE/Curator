@@ -24,8 +24,18 @@ extension EnvironmentValues {
     @Entry var itemActions = ItemActions()
 }
 
-/// Items in titled sections, as a poster grid or a list. Both support the keyboard:
-/// arrows move the selection, Return opens in Plex, Space previews.
+/// Editing a playlist in place: Delete removes the selected title, and dropping one title on
+/// another moves it there.
+struct CollectionEditing {
+    var remove: (PlexItem) -> Void
+    /// Moves the dragged entry to the target's place; `false` if the drop isn't a move.
+    var move: (_ dragged: PlaylistCandidate, _ target: PlexItem) -> Bool
+}
+
+/// Items in titled sections, as a poster grid or a list. Both layouts share one scroll view and
+/// one key handler: arrows move the selection, Return opens in Plex, Space previews, and
+/// double-click opens. `List` isn't used for the list layout because it stops taking arrow keys
+/// once its rows are draggable.
 struct ItemCollectionView: View {
     let sections: [ItemSection]
     @Binding var selection: PlexItem?
@@ -34,67 +44,26 @@ struct ItemCollectionView: View {
     var onReachEnd: (() -> Void)?
     /// Changing this scrolls back to the top.
     var scrollToTop = 0
+    /// Numbers the list rows, for a playlist's order.
+    var numbered = false
+    var editing: CollectionEditing?
+    /// Overrides the cells' accessibility identifier ("poster" or "itemRow").
+    var cellIdentifier: String?
 
     @AppStorage(ViewMode.storageKey) private var viewMode = ViewMode.grid
-
-    var body: some View {
-        switch viewMode {
-        case .grid:
-            PosterGridView(sections: sections, selection: $selection, subtitle: subtitle, isNew: isNew, onReachEnd: onReachEnd, scrollToTop: scrollToTop)
-        case .list:
-            ItemListView(sections: sections, selection: $selection, subtitle: subtitle, isNew: isNew, onReachEnd: onReachEnd, scrollToTop: scrollToTop)
-        }
-    }
-}
-
-// MARK: - Grid
-
-private struct PosterGridView: View {
-    let sections: [ItemSection]
-    @Binding var selection: PlexItem?
-    let subtitle: (PlexItem) -> String?
-    let isNew: (PlexItem) -> Bool
-    let onReachEnd: (() -> Void)?
-    let scrollToTop: Int
-
     @Environment(\.itemActions) private var actions
     @FocusState private var isFocused: Bool
     @State private var metrics = GridMetrics()
 
-    private static let minimum: CGFloat = 140
-    private static let spacing: CGFloat = 20
-    private static let padding: CGFloat = 20
-    private let columns = [GridItem(.adaptive(minimum: minimum, maximum: 180), spacing: spacing, alignment: .top)]
-
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVGrid(columns: columns, alignment: .leading, spacing: 24, pinnedViews: .sectionHeaders) {
-                    ForEach(sections) { section in
-                        Section {
-                            ForEach(section.items) { item in
-                                Button {
-                                    selection = item
-                                    isFocused = true
-                                } label: {
-                                    PosterCard(item: item, subtitle: subtitle(item), isNew: isNew(item), isSelected: selection?.id == item.id)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityIdentifier("poster")
-                                .draggable(PlaylistCandidate(item)) { DragPreview(title: item.displayTitle) }
-                                .contextMenu { ItemContextMenu(item: item) }
-                                .onAppear {
-                                    if item.id == sections.last?.items.last?.id { onReachEnd?() }
-                                }
-                            }
-                        } header: {
-                            if let title = section.title {
-                                SectionHeader(title: title)
-                            }
-                        }
+                Group {
+                    switch viewMode {
+                    case .grid: PosterGrid(sections: sections, cell: cell)
+                    case .list: ItemList(sections: sections, cell: cell)
                     }
                 }
-                .padding(Self.padding)
                 .id("top")
                 // Written from inside AppKit's layout pass, so it must not be observed state: a
                 // @State width here re-rendered the grid on every resize frame and crashed 0.0.1
@@ -104,13 +73,32 @@ private struct PosterGridView: View {
             .focusable()
             .focused($isFocused)
             .focusEffectDisabled()
-            .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow, .return, .space]) { press in
+            .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow, .return, .space, .delete, .deleteForward]) { press in
                 handle(press.key, proxy: proxy)
             }
             .onChange(of: scrollToTop) {
                 withAnimation { proxy.scrollTo("top", anchor: .top) }
             }
         }
+    }
+
+    private func cell(_ item: PlexItem, _ index: Int) -> CollectionCell {
+        CollectionCell(
+            item: item,
+            mode: viewMode,
+            number: numbered ? number(of: item) : nil,
+            subtitle: subtitle(item),
+            isNew: isNew(item),
+            isSelected: selection?.entryID == item.entryID,
+            isAlternate: index.isMultiple(of: 2) == false,
+            identifier: cellIdentifier ?? (viewMode == .grid ? "poster" : "itemRow"),
+            editing: editing,
+            select: {
+                selection = item
+                isFocused = true
+            },
+            reachedEnd: item.entryID == sections.last?.items.last?.entryID ? onReachEnd : nil
+        )
     }
 
     private func handle(_ key: KeyEquivalent, proxy: ScrollViewProxy) -> KeyPress.Result {
@@ -121,14 +109,28 @@ private struct PosterGridView: View {
         case .space:
             guard let selection else { return .ignored }
             actions.preview(selection)
-        default:
-            let direction: GridNavigation.Direction = switch key {
-            case .leftArrow: .left
-            case .rightArrow: .right
-            case .upArrow: .up
-            default: .down
+        case .delete, .deleteForward:
+            guard let editing, let selection else { return .ignored }
+            // Keep a selection so Delete can be pressed again: the next title, or the one before.
+            let items = sections.flatMap(\.items)
+            let index = items.firstIndex { $0.entryID == selection.entryID }
+            let neighbor = index.flatMap { index in
+                items.indices.contains(index + 1) ? items[index + 1] : index > 0 ? items[index - 1] : nil
             }
-            let columns = GridNavigation.columns(width: metrics.width - 2 * Self.padding, minimum: Self.minimum, spacing: Self.spacing)
+            editing.remove(selection)
+            self.selection = neighbor
+        default:
+            let direction: GridNavigation.Direction
+            switch (key, viewMode) {
+            case (.upArrow, _): direction = .up
+            case (.downArrow, _): direction = .down
+            case (.leftArrow, .grid): direction = .left
+            case (.rightArrow, .grid): direction = .right
+            default: return .ignored
+            }
+            let columns = viewMode == .grid
+                ? GridNavigation.columns(width: metrics.width - 2 * PosterGrid.padding, minimum: PosterGrid.minimum, spacing: PosterGrid.spacing)
+                : 1
             guard let next = GridNavigation.move(from: position(of: selection), direction, counts: sections.map(\.items.count), columns: columns) else {
                 return .handled
             }
@@ -136,7 +138,7 @@ private struct PosterGridView: View {
             selection = item
             // Only keyboard moves scroll; a click selects something already on screen, and
             // scrolling then made the grid jump.
-            proxy.scrollTo(item.id)
+            proxy.scrollTo(item.entryID)
         }
         return .handled
     }
@@ -144,11 +146,15 @@ private struct PosterGridView: View {
     private func position(of item: PlexItem?) -> GridNavigation.Position? {
         guard let item else { return nil }
         for (sectionIndex, section) in sections.enumerated() {
-            if let index = section.items.firstIndex(where: { $0.id == item.id }) {
+            if let index = section.items.firstIndex(where: { $0.entryID == item.entryID }) {
                 return GridNavigation.Position(section: sectionIndex, index: index)
             }
         }
         return nil
+    }
+
+    private func number(of item: PlexItem) -> Int? {
+        sections.flatMap(\.items).firstIndex { $0.entryID == item.entryID }.map { $0 + 1 }
     }
 }
 
@@ -158,15 +164,133 @@ private final class GridMetrics {
     var width: CGFloat = 0
 }
 
+// MARK: - Layouts
+
+private struct PosterGrid: View {
+    let sections: [ItemSection]
+    let cell: (PlexItem, Int) -> CollectionCell
+
+    static let minimum: CGFloat = 140
+    static let spacing: CGFloat = 20
+    static let padding: CGFloat = 20
+    private let columns = [GridItem(.adaptive(minimum: minimum, maximum: 180), spacing: spacing, alignment: .top)]
+
+    var body: some View {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: 24, pinnedViews: .sectionHeaders) {
+            ForEach(sections) { section in
+                Section {
+                    ForEach(Array(section.items.enumerated()), id: \.element.entryID) { index, item in
+                        cell(item, index)
+                    }
+                } header: {
+                    if let title = section.title {
+                        SectionHeader(title: title, font: .title3.bold())
+                    }
+                }
+            }
+        }
+        .padding(Self.padding)
+    }
+}
+
+private struct ItemList: View {
+    let sections: [ItemSection]
+    let cell: (PlexItem, Int) -> CollectionCell
+
+    var body: some View {
+        LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
+            ForEach(sections) { section in
+                Section {
+                    ForEach(Array(section.items.enumerated()), id: \.element.entryID) { index, item in
+                        cell(item, index)
+                    }
+                } header: {
+                    if let title = section.title {
+                        SectionHeader(title: title, font: .headline)
+                            .padding(.horizontal, 10)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+    }
+}
+
 private struct SectionHeader: View {
     let title: String
+    let font: Font
 
     var body: some View {
         Text(title)
-            .font(.title3.bold())
+            .font(font)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 6)
             .background(.background)
+    }
+}
+
+// MARK: - Cells
+
+/// One title in either layout. Click selects, double-click opens in Plex, and it can be dragged
+/// onto a playlist; when editing, it also takes drops to reorder.
+private struct CollectionCell: View {
+    let item: PlexItem
+    let mode: ViewMode
+    let number: Int?
+    let subtitle: String?
+    let isNew: Bool
+    let isSelected: Bool
+    let isAlternate: Bool
+    let identifier: String
+    let editing: CollectionEditing?
+    let select: () -> Void
+    let reachedEnd: (() -> Void)?
+
+    @Environment(\.itemActions) private var actions
+    @State private var isTargeted = false
+
+    var body: some View {
+        Button(action: select) {
+            switch mode {
+            case .grid:
+                PosterCard(item: item, subtitle: subtitle, isNew: isNew, isSelected: isSelected || isTargeted)
+            case .list:
+                ItemRow(item: item, number: number, subtitle: subtitle, isNew: isNew, isSelected: isSelected)
+                    .background(rowBackground, in: .rect(cornerRadius: 5))
+                    .overlay {
+                        if isTargeted {
+                            RoundedRectangle(cornerRadius: 5).strokeBorder(Color.accentColor, lineWidth: 2)
+                        }
+                    }
+            }
+        }
+        .buttonStyle(.plain)
+        .simultaneousGesture(TapGesture(count: 2).onEnded { actions.open(item) })
+        .accessibilityIdentifier(identifier)
+        .id(item.entryID)
+        .draggable(PlaylistCandidate(item)) { DragPreview(title: item.displayTitle) }
+        .dropDestination(for: PlaylistCandidate.self) { candidates, _ in
+            guard let editing, let dragged = candidates.first else { return false }
+            return editing.move(dragged, item)
+        } isTargeted: { targeted in
+            // A drop only means something here while editing a playlist.
+            isTargeted = targeted && editing != nil
+        }
+        .contextMenu {
+            if let editing {
+                Button("Remove from Playlist") { editing.remove(item) }
+                Divider()
+            }
+            ItemContextMenu(item: item)
+        }
+        .onAppear { reachedEnd?() }
+    }
+
+    private var rowBackground: AnyShapeStyle {
+        if isSelected { AnyShapeStyle(Color.accentColor.opacity(0.3)) }
+        else if isAlternate { AnyShapeStyle(.primary.opacity(0.04)) }
+        else { AnyShapeStyle(.clear) }
     }
 }
 
@@ -210,79 +334,21 @@ struct PosterCard: View {
     }
 }
 
-// MARK: - List
-
-private struct ItemListView: View {
-    let sections: [ItemSection]
-    @Binding var selection: PlexItem?
-    let subtitle: (PlexItem) -> String?
-    let isNew: (PlexItem) -> Bool
-    let onReachEnd: (() -> Void)?
-    let scrollToTop: Int
-
-    @Environment(\.itemActions) private var actions
-
-    var body: some View {
-        ScrollViewReader { proxy in
-            List(selection: selectedID) {
-                ForEach(sections) { section in
-                    Section {
-                        ForEach(section.items) { item in
-                            ItemRow(item: item, subtitle: subtitle(item), isNew: isNew(item))
-                                .tag(item.id)
-                                .draggable(PlaylistCandidate(item)) { DragPreview(title: item.displayTitle) }
-                                .onAppear {
-                                    if item.id == sections.last?.items.last?.id { onReachEnd?() }
-                                }
-                        }
-                    } header: {
-                        if let title = section.title { Text(title) }
-                    }
-                }
-            }
-            .listStyle(.inset(alternatesRowBackgrounds: true))
-            // Double-click or Return opens in Plex, like opening a file in Finder.
-            .contextMenu(forSelectionType: String.self) { ids in
-                if let item = ids.first.flatMap(item(withID:)) {
-                    ItemContextMenu(item: item)
-                }
-            } primaryAction: { ids in
-                if let item = ids.first.flatMap(item(withID:)) { actions.open(item) }
-            }
-            .onKeyPress(.space) {
-                guard let selection else { return .ignored }
-                actions.preview(selection)
-                return .handled
-            }
-            .onChange(of: scrollToTop) {
-                if let first = sections.first?.items.first { withAnimation { proxy.scrollTo(first.id, anchor: .top) } }
-            }
-        }
-    }
-
-    private var selectedID: Binding<String?> {
-        Binding {
-            selection?.id
-        } set: { id in
-            selection = id.flatMap(item(withID:))
-        }
-    }
-
-    private func item(withID id: String) -> PlexItem? {
-        for section in sections {
-            if let item = section.items.first(where: { $0.id == id }) { return item }
-        }
-        return nil
-    }
-}
-
 private struct ItemRow: View {
     let item: PlexItem
+    let number: Int?
     let subtitle: String?
     let isNew: Bool
+    let isSelected: Bool
 
     var body: some View {
         HStack(spacing: 10) {
+            if let number {
+                Text("\(number)")
+                    .font(.callout.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 24, alignment: .trailing)
+            }
             Color.clear
                 .frame(width: 28, height: 42)
                 .overlay { ArtworkView(item: item, kind: .poster) }
@@ -307,8 +373,11 @@ private struct ItemRow: View {
                     .frame(width: 150, alignment: .trailing)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .contentShape(.rect)
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

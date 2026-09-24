@@ -59,10 +59,21 @@ struct PlexTestAPI {
     }
 
     func createPlaylist(named title: String, ratingKey: String) async throws {
+        try await createPlaylist(named: title, ratingKeys: [ratingKey])
+    }
+
+    /// A playlist holding these titles, in this order.
+    func createPlaylist(named title: String, ratingKeys: [String]) async throws {
         let machine = try await json("/")["machineIdentifier"] as? String ?? ""
         _ = try await json("/playlists", method: "POST", query: [
             "type": "video", "title": title, "smart": "0",
-            "uri": "server://\(machine)/com.plexapp.plugins.library/library/metadata/\(ratingKey)",
+            "uri": "server://\(machine)/com.plexapp.plugins.library/library/metadata/\(ratingKeys.joined(separator: ","))",
         ])
+    }
+
+    /// The rating keys in a playlist, in its order.
+    func itemKeys(of playlistID: String) async throws -> [String] {
+        let items = try await json("/playlists/\(playlistID)/items")["Metadata"] as? [[String: Any]] ?? []
+        return items.compactMap { $0["ratingKey"] as? String }
     }
 }

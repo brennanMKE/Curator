@@ -81,8 +81,16 @@ Playlists
 Selecting a playlist shows its items in order:
 
 - The header shows the name, count and total runtime ("5 movies · 10h 21m").
-- Drag rows to reorder. Remove with **Delete** or the context menu.
-- Arrow keys, Return (open in Plex), Space (preview) and the inspector work as elsewhere.
+- It follows the toolbar's grid/list switch, like every other view. The list numbers the
+  titles.
+- Drag a title onto another to move it there: after it when dragging down, before it when
+  dragging up. Remove with **Delete** or the context menu.
+- Arrow keys, Return (open in Plex), Space (preview), double-click and the inspector work as
+  elsewhere.
+
+Every view, playlists included, uses the same `ItemCollectionView`: one scroll view with its
+own key handling, laying out cells as a grid or a list. The list isn't a SwiftUI `List`,
+because `List` stopped taking arrow keys once its rows were draggable (0.1.0).
 - The toolbar has **Open in Plex**, **Rename…** and **Delete Playlist…**. Deleting asks for
   confirmation, because it deletes the playlist on the server for every Plex app.
 

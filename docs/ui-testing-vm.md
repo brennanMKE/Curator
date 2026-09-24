@@ -131,8 +131,9 @@ Debug builds only (`#if DEBUG` in `AppModel.forLaunch()`): when launched with
 writes real settings. The tests also pass `-viewMode grid`, so the layout doesn't depend on
 the last choice.
 
-Accessibility identifiers the tests use: `poster` (each poster in the grid) and
-`detailTitle` (the inspector's title).
+Accessibility identifiers the tests use: `poster` (each poster in the grid), `itemRow` (each
+row in the list), `playlistEntry` (a playlist's titles, in either layout) and `detailTitle`
+(the inspector's title).
 
 ## The tests
 
@@ -145,6 +146,8 @@ Accessibility identifiers the tests use: `poster` (each poster in the grid) and
 | `testUnreachableServerExplainsTheProblem` | no | A refused connection (`127.0.0.1:1`) shows the error and Try Again |
 | `testRecentlyAddedShowsPostersAndDetails` | yes | Posters load; clicking one fills the inspector and shows Open in Plex |
 | `testArrowKeysMoveSelectionAndSpacePreviews` | yes | → changes the selected title; Space opens the preview; Escape closes it |
+| `testArrowKeysMoveSelectionInTheList` | yes | In the list layout, ↓ and ↑ move the selected title |
+| `testPlaylistGridAndListReorder` | yes | A 3-title playlist in grid and list: arrows move, dragging the first entry onto the last reorders it on the server |
 | `testSearchShowsNoResultsForAnUnknownTitle` | yes | ⌘F, typing, and the No Results state |
 | `testMenuBarWindowShowsItsControls` | no | The status item opens the panel with Open Curator, Settings and Quit (screenshot kept) |
 | `testMenuBarWindowListsTheLatestImports` | yes | At most 5 rows, none overlapping the header or footer (screenshot kept) |

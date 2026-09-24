@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// One playlist's titles, in order: drag to reorder, Delete to remove.
+/// One playlist's titles, in order, as a grid or a list: drag one onto another to reorder,
+/// Delete to remove.
 struct PlaylistDetailView: View {
     let playlistID: String
     @Binding var selection: PlexItem?
 
     @Environment(PlaylistStore.self) private var playlists
     @Environment(AppModel.self) private var model
-    @Environment(\.itemActions) private var actions
     @Environment(\.openURL) private var openURL
     @State private var isRenaming = false
     @State private var newName = ""
@@ -60,48 +60,37 @@ struct PlaylistDetailView: View {
                 ContentUnavailableView("\(playlist.title) Is Empty", systemImage: "list.and.film",
                                        description: Text("Right-click a poster and choose Add to Playlist, or drag one onto this playlist in the sidebar."))
             } else {
-                List(selection: selectedEntry(in: entries)) {
-                    ForEach(Array(entries.enumerated()), id: \.element.entryID) { index, entry in
-                        PlaylistEntryRow(index: index + 1, entry: entry)
-                            .tag(entry.entryID)
-                            .accessibilityIdentifier("playlistEntry")
-                    }
-                    .onMove { source, destination in
-                        playlists.move(in: playlist, from: source, to: destination)
-                    }
-                }
-                .listStyle(.inset(alternatesRowBackgrounds: true))
-                .contextMenu(forSelectionType: String.self) { ids in
-                    if let entry = ids.first.flatMap({ id in entries.first { $0.entryID == id } }) {
-                        Button("Remove from Playlist") { playlists.remove(entry, from: playlist) }
-                        Divider()
-                        ItemContextMenu(item: entry)
-                    }
-                } primaryAction: { ids in
-                    if let entry = ids.first.flatMap({ id in entries.first { $0.entryID == id } }) { actions.open(entry) }
-                }
-                .onDeleteCommand {
-                    if let entry = selection, entries.contains(where: { $0.entryID == entry.entryID }) {
-                        playlists.remove(entry, from: playlist)
-                    }
-                }
-                .onKeyPress(.space) {
-                    guard let selection else { return .ignored }
-                    actions.preview(selection)
-                    return .handled
-                }
+                ItemCollectionView(
+                    sections: [ItemSection(id: playlist.id, title: nil, items: entries)],
+                    selection: $selection,
+                    subtitle: { entry in
+                        [entry.displaySubtitle, entry.duration.map { Format.runtime(milliseconds: $0) }]
+                            .compactMap(\.self)
+                            .joined(separator: " · ")
+                    },
+                    numbered: true,
+                    editing: CollectionEditing(
+                        remove: { playlists.remove($0, from: playlist) },
+                        move: { dragged, target in move(dragged, onto: target, in: playlist, entries: entries) }
+                    ),
+                    cellIdentifier: "playlistEntry"
+                )
             }
         } else {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
-    private func selectedEntry(in entries: [PlexItem]) -> Binding<String?> {
-        Binding {
-            selection?.entryID
-        } set: { id in
-            selection = id.flatMap { id in entries.first { $0.entryID == id } }
-        }
+    /// Dropping an entry on another takes the target's place: after it when dragged down, before
+    /// it when dragged up.
+    private func move(_ dragged: PlaylistCandidate, onto target: PlexItem, in playlist: PlexPlaylist, entries: [PlexItem]) -> Bool {
+        guard let draggedID = dragged.playlistItemID,
+              let from = entries.firstIndex(where: { $0.playlistItemID == draggedID }),
+              let to = entries.firstIndex(where: { $0.entryID == target.entryID }),
+              from != to
+        else { return false }
+        playlists.move(in: playlist, from: IndexSet(integer: from), to: to > from ? to + 1 : to)
+        return true
     }
 
     private func summary(of playlist: PlexPlaylist) -> String {
@@ -114,38 +103,6 @@ struct PlaylistDetailView: View {
               let url = model.settings.plexClient?.webURL(forPlaylist: playlist.id, machineIdentifier: server.machineIdentifier)
         else { return }
         openURL(url)
-    }
-}
-
-private struct PlaylistEntryRow: View {
-    let index: Int
-    let entry: PlexItem
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Text("\(index)")
-                .font(.callout.monospacedDigit())
-                .foregroundStyle(.secondary)
-                .frame(width: 24, alignment: .trailing)
-            Color.clear
-                .frame(width: 28, height: 42)
-                .overlay { ArtworkView(item: entry, kind: .poster) }
-                .clipShape(.rect(cornerRadius: 3))
-            VStack(alignment: .leading, spacing: 1) {
-                Text(entry.displayTitle).lineLimit(1)
-                if let subtitle = entry.displaySubtitle {
-                    Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                }
-            }
-            Spacer(minLength: 8)
-            if let duration = entry.duration {
-                Text(Format.runtime(milliseconds: duration))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 2)
-        .accessibilityElement(children: .combine)
     }
 }
 
