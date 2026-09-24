@@ -7,6 +7,16 @@
     <language>en</language>
     <!-- ITEMS: scripts/update-website.sh adds each release here, newest first. Don't edit by hand. -->
     <item>
+      <title>0.1.2</title>
+      <pubDate>Thu, 24 Sep 2026 05:14:53 +0000</pubDate>
+      <sparkle:version>202609240513</sparkle:version>
+      <sparkle:shortVersionString>0.1.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://curator.sstools.co/changelog.html#v0-1-2</sparkle:releaseNotesLink>
+      <description><![CDATA[<p>Filter a library by genre.</p><ul><li><b>Genres:</b> each library has a Genre menu in the toolbar, listing the genres Plex found in its titles with how many are in each. Choose one to see only those titles; sorting still works. All Genres shows everything again.</li></ul>]]></description>
+      <enclosure url="https://curator.sstools.co/downloads/Curator-0.1.2.dmg" length="4309490" type="application/octet-stream" sparkle:edSignature="C7rI7Sa8JSjyDYlw/NITpTGCaZzj8L6Csgr6oU/iF5/l5q3mmxIyqmKYz3jW2L5LdnFVKyriHODNJK4O7Hf8Cw=="/>
+    </item>
+    <item>
       <title>0.1.1</title>
       <pubDate>Thu, 24 Sep 2026 04:40:14 +0000</pubDate>
       <sparkle:version>202609240439</sparkle:version>
