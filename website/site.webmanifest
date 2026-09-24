@@ -1,0 +1,13 @@
+{
+  "name": "Curator",
+  "short_name": "Curator",
+  "description": "See what Plex just added. A Mac app for your Plex library.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#1e1d1b",
+  "theme_color": "#1e1d1b",
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

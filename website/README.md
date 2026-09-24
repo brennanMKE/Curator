@@ -18,7 +18,8 @@ Source Serif 4, from Google Fonts.
 | `index.html`, `privacy.html`, `css/style.css` | hand. The download button between the `LATEST` markers is rewritten by `scripts/update-website.sh` |
 | `appcast.xml` | `scripts/update-website.sh` only |
 | `changelog.html` | generated from `CHANGELOG.md` using `src/changelog.template.html` |
-| `assets/curator-icon.png`, `apple-touch-icon.png`, `favicon-32.png` | resized from the built app's `AppIcon.icns` |
+| `favicon.svg`, `favicon.ico`, `assets/favicon-16.png`, `assets/favicon-32.png` | the browser-tab icon: the robot's hat and head (the menu bar symbol) in Plex gold on charcoal. `favicon.svg` is generated from `Curator/Assets.xcassets/curator.bust.symbolset`; the PNGs are rendered from it with `rsvg-convert`, and `favicon.ico` packs the 16, 32 and 48 px PNGs. Chrome uses the SVG, Safari the ICO/PNGs |
+| `assets/curator-icon.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` | the full app icon, resized from the built app's `AppIcon.icns`, for the page header, iOS home screens and `site.webmanifest` (Chrome) |
 | `assets/curator-robot.svg` | the icon's robot in Plex gold, from `Curator/AppIcon.icon/Assets/Curator.svg` |
 | `assets/social-card.png` | rendered from `src/social-card.html` (below) |
 
