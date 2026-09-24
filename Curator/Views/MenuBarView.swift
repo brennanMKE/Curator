@@ -25,6 +25,7 @@ struct MenuBarView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(LibraryStore.self) private var library
     @Environment(RecentStore.self) private var recent
+    @Environment(NowPlayingStore.self) private var nowPlaying
     @Environment(AppNavigation.self) private var navigation
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismiss) private var dismiss
@@ -79,7 +80,7 @@ struct MenuBarView: View {
                     ScrollView {
                         VStack(spacing: 2) {
                             ForEach(recent.items.prefix(Self.itemLimit)) { item in
-                                MenuBarRow(item: item, isNew: RecentStore.isNew(item, now: context.date), now: context.date) {
+                                MenuBarRow(item: item, isNew: RecentStore.isNew(item, now: context.date), nowPlaying: nowPlaying.state(for: item), now: context.date) {
                                     show(item)
                                 }
                             }
@@ -141,6 +142,7 @@ struct MenuBarView: View {
 private struct MenuBarRow: View {
     let item: PlexItem
     let isNew: Bool
+    let nowPlaying: NowPlaying?
     let now: Date
     let action: () -> Void
     @State private var isHovered = false
@@ -162,6 +164,7 @@ private struct MenuBarRow: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 4)
+                if let nowPlaying { NowPlayingBadge(nowPlaying: nowPlaying) }
                 if isNew { NewBadge() }
             }
             .padding(.horizontal, 6)

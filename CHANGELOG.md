@@ -3,6 +3,12 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
+## Unreleased
+
+- **Now playing:** a poster shows a small play or pause badge in its corner while that title
+  is playing on any Plex player; hover it to see which one ("Paused on Apple TV"). Episodes
+  mark their show too. It checks every 10 seconds, and it's display only.
+
 ## 0.1.2
 
 Filter a library by genre.

@@ -8,7 +8,7 @@ nonisolated struct PlexContext: Sendable {
 }
 
 /// Owns every long-running piece of work: connecting, checking the TMDB key, polling
-/// Recently Added, and reloading what's on screen after a reconnect.
+/// Recently Added and what's playing, and reloading what's on screen after a reconnect.
 ///
 /// Views never start or cancel network requests. They render store state and send
 /// intents (`refresh()`, `search.query = …`, `store.loadNextPage()`); each store owns its
@@ -23,6 +23,7 @@ final class AppModel {
     let search = SearchStore()
     let details = ItemDetailStore()
     let playlists = PlaylistStore()
+    let nowPlaying = NowPlayingStore()
 
     /// How Movies and TV Shows are ordered; one choice for both, remembered across launches.
     var librarySort: LibrarySort {
@@ -55,6 +56,7 @@ final class AppModel {
         recent.context = context
         search.context = context
         details.context = context
+        nowPlaying.context = context
         playlists.context = { [weak self] in
             guard let self, let context = plexContext, let server = library.server else { return nil }
             return PlaylistContext(client: context.client, machineIdentifier: server.machineIdentifier)
@@ -136,7 +138,10 @@ final class AppModel {
 
     private func didConnect() {
         details.removeAll()
-        guard library.status == .connected else { return }
+        guard library.status == .connected else {
+            nowPlaying.stop()
+            return
+        }
 
         let keys = Set(library.sections.map(\.key))
         for (key, store) in browseStores {
@@ -149,6 +154,7 @@ final class AppModel {
         }
         search.rerun()
         playlists.reload()
+        nowPlaying.start()
 
         // A different server means a different library: start Recently Added over.
         let serverID = library.server?.machineIdentifier

@@ -82,3 +82,36 @@ nonisolated struct PlexCount: Decodable, Sendable {
     let size: Int
     let totalSize: Int?
 }
+
+/// `GET /status/sessions`: what every player is streaming right now.
+nonisolated struct PlexSessionList: Decodable, Sendable {
+    let sessions: [PlexSession]
+
+    enum CodingKeys: String, CodingKey {
+        case sessions = "Metadata"
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        sessions = try container.decodeIfPresent([PlexSession].self, forKey: .sessions) ?? []
+    }
+}
+
+nonisolated struct PlexSession: Decodable, Sendable, Equatable {
+    let ratingKey: String
+    /// For an episode, its show.
+    let grandparentRatingKey: String?
+    let player: Player
+
+    struct Player: Decodable, Sendable, Equatable {
+        let title: String?
+        let product: String?
+        /// "playing", "paused" or "buffering".
+        let state: String?
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case ratingKey, grandparentRatingKey
+        case player = "Player"
+    }
+}

@@ -15,6 +15,7 @@ built for the moment you're ripping and importing discs and want to see them lan
   Lebowski*). Matches on cast or crew say why they matched.
 - **Browse** each library, sorted by title, release date, date added or rating, and filtered
   to one genre with the toolbar's Genre menu.
+- **Now playing:** a play or pause badge on the poster of anything playing on a Plex player.
 - **Details inspector** for the selected title: artwork, summary, runtime, cast, when it
   was added, video and audio format, and the file path and size on the server.
 - **Playlists:** right-click a poster and choose Add to Playlist, or drag it onto a playlist in

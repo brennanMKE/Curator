@@ -18,6 +18,7 @@ struct CuratorApp: App {
                 .environment(model.search)
                 .environment(model.details)
                 .environment(model.playlists)
+                .environment(model.nowPlaying)
                 .environment(artwork)
                 .environment(navigation)
         }
@@ -33,6 +34,7 @@ struct CuratorApp: App {
                 .environment(model.library)
                 .environment(model.tmdb)
                 .environment(model.recent)
+                .environment(model.nowPlaying)
                 .environment(artwork)
                 .environment(navigation)
         } label: {

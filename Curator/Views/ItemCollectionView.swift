@@ -248,15 +248,16 @@ private struct CollectionCell: View {
     let reachedEnd: (() -> Void)?
 
     @Environment(\.itemActions) private var actions
+    @Environment(NowPlayingStore.self) private var nowPlaying
     @State private var isTargeted = false
 
     var body: some View {
         Button(action: select) {
             switch mode {
             case .grid:
-                PosterCard(item: item, subtitle: subtitle, isNew: isNew, isSelected: isSelected || isTargeted)
+                PosterCard(item: item, subtitle: subtitle, isNew: isNew, nowPlaying: nowPlaying.state(for: item), isSelected: isSelected || isTargeted)
             case .list:
-                ItemRow(item: item, number: number, subtitle: subtitle, isNew: isNew, isSelected: isSelected)
+                ItemRow(item: item, number: number, subtitle: subtitle, isNew: isNew, nowPlaying: nowPlaying.state(for: item), isSelected: isSelected)
                     .background(rowBackground, in: .rect(cornerRadius: 5))
                     .overlay {
                         if isTargeted {
@@ -298,6 +299,7 @@ struct PosterCard: View {
     let item: PlexItem
     let subtitle: String?
     let isNew: Bool
+    var nowPlaying: NowPlaying?
     let isSelected: Bool
 
     var body: some View {
@@ -312,6 +314,9 @@ struct PosterCard: View {
                 }
                 .overlay(alignment: .topLeading) {
                     if isNew { NewBadge().padding(6) }
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    if let nowPlaying { NowPlayingBadge(nowPlaying: nowPlaying).padding(6) }
                 }
                 .shadow(color: .black.opacity(0.15), radius: 3, y: 2)
 
@@ -339,6 +344,7 @@ private struct ItemRow: View {
     let number: Int?
     let subtitle: String?
     let isNew: Bool
+    let nowPlaying: NowPlaying?
     let isSelected: Bool
 
     var body: some View {
@@ -364,6 +370,7 @@ private struct ItemRow: View {
                 }
             }
             Spacer(minLength: 8)
+            if let nowPlaying { NowPlayingBadge(nowPlaying: nowPlaying) }
             if isNew { NewBadge() }
             if let media = item.media.first {
                 Text(Format.mediaSummary(media))
@@ -392,6 +399,23 @@ struct NewBadge: View {
             .background(.tint, in: .capsule)
             // Near-black on Plex gold, as Plex does; white on gold is too faint.
             .foregroundStyle(Color(white: 0.1))
+    }
+}
+
+/// Play or pause, in Plex gold like the NEW badge; the tooltip names the player.
+struct NowPlayingBadge: View {
+    let nowPlaying: NowPlaying
+
+    var body: some View {
+        Image(systemName: nowPlaying.state == .paused ? "pause.fill" : "play.fill")
+            .font(.caption.bold())
+            .frame(width: 22, height: 22)
+            .background(.tint, in: .circle)
+            .foregroundStyle(Color(white: 0.1))
+            .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+            .help(nowPlaying.description)
+            .accessibilityLabel(nowPlaying.description)
+            .accessibilityIdentifier("nowPlayingBadge")
     }
 }
 
