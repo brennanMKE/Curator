@@ -7,6 +7,16 @@
     <language>en</language>
     <!-- ITEMS: scripts/update-website.sh adds each release here, newest first. Don't edit by hand. -->
     <item>
+      <title>0.1.1</title>
+      <pubDate>Thu, 24 Sep 2026 04:40:14 +0000</pubDate>
+      <sparkle:version>202609240439</sparkle:version>
+      <sparkle:shortVersionString>0.1.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://curator.sstools.co/changelog.html#v0-1-1</sparkle:releaseNotesLink>
+      <description><![CDATA[<p>Playlists as a grid, and arrow keys in lists.</p><ul><li><b>Playlists as a grid:</b> a playlist now follows the grid/list switch in the toolbar, like everywhere else. In either layout, drag a title onto another to move it there.</li><li><b>Arrow keys in the list:</b> ↑ and ↓ move through the list again, in every view. Double-click a title to open it in Plex, in the grid or the list.</li></ul>]]></description>
+      <enclosure url="https://curator.sstools.co/downloads/Curator-0.1.1.dmg" length="4271301" type="application/octet-stream" sparkle:edSignature="SuTqsPqx3sXJEOccs58USg5y+SmlMGR6XsDkeGzKhRxPQDJb9JJ5voL7VA/kJxYm+19RV9zppHMEbEXHltq+CQ=="/>
+    </item>
+    <item>
       <title>0.1.0</title>
       <pubDate>Thu, 24 Sep 2026 02:34:57 +0000</pubDate>
       <sparkle:version>202609240233</sparkle:version>
