@@ -3,7 +3,9 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
-## Unreleased
+## 0.1.1
+
+Playlists as a grid, and arrow keys in lists.
 
 - **Playlists as a grid:** a playlist now follows the grid/list switch in the toolbar, like
   everywhere else. In either layout, drag a title onto another to move it there.
