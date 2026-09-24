@@ -7,6 +7,16 @@
     <language>en</language>
     <!-- ITEMS: scripts/update-website.sh adds each release here, newest first. Don't edit by hand. -->
     <item>
+      <title>0.1.0</title>
+      <pubDate>Thu, 24 Sep 2026 02:34:57 +0000</pubDate>
+      <sparkle:version>202609240233</sparkle:version>
+      <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://curator.sstools.co/changelog.html#v0-1-0</sparkle:releaseNotesLink>
+      <description><![CDATA[<p>Playlists. Build a Die Hard marathon in a few clicks, and play it on any Plex app, including Apple TV.</p><ul><li><b>Add to Playlist:</b> right-click any poster. Your three most recently changed playlists are right there, the rest are under All Playlists, and New Playlist… starts one with that title.</li><li><b>Drag and drop:</b> drag a poster onto a playlist in the sidebar to add it, or onto New Playlist to start one. The sidebar lists your five most recently changed playlists.</li><li><b>Playlists:</b> open one to see its titles in order with the total runtime. Drag to reorder, press Delete to remove, and rename, delete or open it in Plex from the toolbar.</li><li><b>Undo:</b> a banner confirms each change, with Undo when you add a title. Titles already in a playlist aren't added twice.</li></ul>]]></description>
+      <enclosure url="https://curator.sstools.co/downloads/Curator-0.1.0.dmg" length="4302643" type="application/octet-stream" sparkle:edSignature="56yN5gZqM/veQIyDdWqRxsImYIf217QTqus5tRb5d/HP62tXxiiDejYb7TbJZf93SjwquWAZ/psqvHFxUoLKBQ=="/>
+    </item>
+    <item>
       <title>0.0.4</title>
       <pubDate>Thu, 24 Sep 2026 00:22:35 +0000</pubDate>
       <sparkle:version>202609240021</sparkle:version>
