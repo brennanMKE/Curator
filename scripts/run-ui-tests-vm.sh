@@ -220,7 +220,9 @@ fi
 grep -E "Test case .* (passed|failed|skipped)|Executed|TEST (SUCCEEDED|FAILED)" "$RESULTS_DIR/xcodebuild.log" | tail -15 || true
 crashes=( "$RESULTS_DIR"/crashes/*.ips(N) )
 (( ${#crashes} )) && log "CRASH REPORTS: ${#crashes} in $RESULTS_DIR/crashes/"
-warnings="$(grep -c -i -E "modifying state during view update|multiple times per frame|attributegraph: cycle|publishing changes from within view updates|constraint|exception" "$RESULTS_DIR/app-warnings.log" 2>/dev/null || true)"
+# SwiftUI state-flow and AppKit layout problems only; system noise (e.g. the spell-check
+# service timing out while a test types) isn't counted.
+warnings="$(grep -c -i -E "modifying state during view update|multiple times per frame|attributegraph: cycle|publishing changes from within view updates|needs another update constraints|_postWindowNeedsUpdateConstraints|NSInternalInconsistencyException" "$RESULTS_DIR/app-warnings.log" 2>/dev/null || true)"
 log "SwiftUI/AppKit warnings in the app's log: ${warnings:-0} (see app-warnings.log)"
 
 print ""

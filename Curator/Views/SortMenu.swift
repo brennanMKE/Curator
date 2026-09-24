@@ -21,6 +21,7 @@ struct SortMenu: View {
         } label: {
             Label("Sort", systemImage: "arrow.up.arrow.down")
         }
+        .accessibilityLabel("Sort")
         .help("Sorted by \(sort.field.label.lowercased()), \(orderLabel.lowercased())")
     }
 

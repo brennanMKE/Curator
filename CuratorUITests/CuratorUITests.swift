@@ -219,7 +219,7 @@ final class CuratorUITests: XCTestCase {
         try await waitForCount(1, of: name, api: api)
 
         // Delete the playlist from its toolbar menu.
-        let menu = app.toolbars.menuButtons["Playlist"].firstMatch
+        let menu = app.toolbars.menuButtons["playlistMenu"].firstMatch
         XCTAssertTrue(menu.waitForExistence(timeout: 10))
         menu.click()
         app.menuItems["Delete Playlist…"].click()

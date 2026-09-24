@@ -31,6 +31,9 @@ struct PlaylistDetailView: View {
                         } label: {
                             Label("Playlist", systemImage: "list.and.film")
                         }
+                        // Without this, VoiceOver and UI tests see the symbol's name.
+                        .accessibilityLabel("Playlist")
+                        .accessibilityIdentifier("playlistMenu")
                         .help("Playlist actions")
                     }
                 }
