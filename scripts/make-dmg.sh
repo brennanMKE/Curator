@@ -96,6 +96,9 @@ ditto "$APP_PATH" "$STAGING/$APP_NAME.app"
 ln -s /Applications "$STAGING/Applications"
 rm -f "$WORK_DMG" "$DMG_PATH"
 hdiutil create -volname "$APP_NAME" -srcfolder "$STAGING" -fs HFS+ -format UDZO -ov "$WORK_DMG" -quiet
+# Catch a bad image here, not at notarization: once (0.1.0's first build) hdiutil produced a
+# DMG that couldn't be read back.
+hdiutil verify "$WORK_DMG" -quiet || { print -u2 "error: hdiutil made an unreadable DMG; run again"; exit 1; }
 
 print "==> Signing DMG"
 codesign --force --sign "$SIGN_IDENTITY" --timestamp "$WORK_DMG"
