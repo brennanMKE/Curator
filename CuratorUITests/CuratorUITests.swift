@@ -238,7 +238,8 @@ final class CuratorUITests: XCTestCase {
         await api.deleteTestPlaylists()
         addTeardownBlock { await api.deleteTestPlaylists() }
         let name = PlexTestAPI.uniqueName()
-        let first = try XCTUnwrap(try await api.movieRatingKeys(1).first)
+        let keys = try await api.movieRatingKeys(1)
+        let first = try XCTUnwrap(keys.first)
         try await api.createPlaylist(named: name, ratingKey: first)
 
         let app = try launchWithPlex()
