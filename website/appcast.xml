@@ -7,6 +7,16 @@
     <language>en</language>
     <!-- ITEMS: scripts/update-website.sh adds each release here, newest first. Don't edit by hand. -->
     <item>
+      <title>0.1.4</title>
+      <pubDate>Sun, 04 Oct 2026 07:01:01 +0000</pubDate>
+      <sparkle:version>202610040659</sparkle:version>
+      <sparkle:shortVersionString>0.1.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://curator.sstools.co/changelog.html#v0-1-4</sparkle:releaseNotesLink>
+      <description><![CDATA[<p>See a title's bonus features.</p><ul><li><b>Extras:</b> the inspector lists a title's trailers, featurettes, behind-the-scenes and deleted scenes, with each one's kind and runtime. While a title is selected the list refreshes every minute, so bonus features you import after the movie appear as Plex picks them up.</li></ul>]]></description>
+      <enclosure url="https://curator.sstools.co/downloads/Curator-0.1.4.dmg" length="4355663" type="application/octet-stream" sparkle:edSignature="janqWitIyMoNHC1hg07BGFWEBpeWNOT9fR8pGBPu7rhsxhN/YzT9tpJNNWxd+1F1IjNnilsPKV54K7wY0X9AAA=="/>
+    </item>
+    <item>
       <title>0.1.3</title>
       <pubDate>Thu, 24 Sep 2026 07:05:53 +0000</pubDate>
       <sparkle:version>202609240704</sparkle:version>
