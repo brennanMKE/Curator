@@ -408,7 +408,9 @@ final class CuratorUITests: XCTestCase {
     /// Right-clicks an element and follows a path through the context menu and its submenus.
     @MainActor
     private func chooseFromContextMenu(of element: XCUIElement, in app: XCUIApplication, path: [String]) {
-        element.rightClick()
+        // Near the top, not the centre: on the guest's 768-point screen a poster in the second
+        // row reaches the bottom edge, where the playlist banner covers its centre.
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).rightClick()
         for (index, title) in path.enumerated() {
             let item = app.menuItems[title].firstMatch
             XCTAssertTrue(item.waitForExistence(timeout: 5), "no \"\(title)\" in the context menu")
