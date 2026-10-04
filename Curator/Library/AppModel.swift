@@ -171,6 +171,7 @@ final class AppModel {
                 try? await Task.sleep(for: Self.pollInterval)
                 guard !Task.isCancelled, let self else { return }
                 await recent.load()
+                details.refreshExtras()
                 if let client = settings.plexClient {
                     await library.refreshCounts(using: client)
                 }

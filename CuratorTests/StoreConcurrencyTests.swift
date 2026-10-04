@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import Testing
 @testable import Curator
 
@@ -153,6 +154,25 @@ extension StubbedNetworkTests {
             #expect(await eventually { details.detail(for: "1") != nil && details.detail(for: "2") != nil })
             #expect(details.detail(for: "1")?.title == "Item 1")
             #expect(details.detail(for: "2")?.title == "Item 2")
+        }
+
+        @Test func extrasRefreshForTheShownItem() async {
+            let count = Atomic(0)
+            StubURLProtocol.route { request in
+                guard request.url?.path() == "/library/metadata/1/extras" else { return .init(json: Stub.items([("1", "Movie")])) }
+                let n = count.wrappingAdd(1, ordering: .relaxed).newValue
+                // No closures in here: they'd inherit the test's main-actor isolation and trap
+                // on the URL loading thread.
+                let extras = [("101", "Extra 1"), ("102", "Extra 2")]
+                return .init(json: Stub.items(Array(extras.prefix(n))))
+            }
+            let details = ItemDetailStore()
+            details.context = { Stub.context() }
+
+            details.load("1")
+            #expect(await eventually { details.extras(for: "1")?.count == 1 })
+            details.refreshExtras()   // another bonus feature imported since
+            #expect(await eventually { details.extras(for: "1")?.count == 2 })
         }
 
         @Test func searchWaitsForAConnection() async {

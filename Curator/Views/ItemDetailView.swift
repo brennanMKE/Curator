@@ -37,6 +37,10 @@ struct ItemDetailView: View {
                 }
 
                 facts
+
+                if let extras = details.extras(for: item.ratingKey), !extras.isEmpty {
+                    extrasSection(extras)
+                }
             }
             .padding(16)
         }
@@ -103,6 +107,26 @@ struct ItemDetailView: View {
             }
         }
         .font(.callout)
+    }
+
+    /// Bonus features attached to the item; refreshed while shown, so imports appear as they land.
+    private func extrasSection(_ extras: [PlexItem]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Extras (\(extras.count))")
+                .font(.headline)
+            ForEach(extras) { extra in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(extra.title)
+                        .textSelection(.enabled)
+                    Text([extra.extraLabel, extra.duration.map { Format.runtime(milliseconds: $0) }].compactMap(\.self).joined(separator: " · "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .help(extra.filePath ?? "")
+            }
+        }
+        .font(.callout)
+        .accessibilityIdentifier("detailExtras")
     }
 
     private func row(_ title: String, _ value: String) -> some View {

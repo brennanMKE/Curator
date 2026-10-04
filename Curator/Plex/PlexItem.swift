@@ -5,6 +5,8 @@ import Foundation
 nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
     let ratingKey: String
     let type: String
+    /// Extras (`type` "clip") only: "trailer", "featurette", "behindTheScenes"…
+    let subtype: String?
     let title: String
     /// Plex's sort title ("Big Lebowski" for "The Big Lebowski"); nil when it's the title itself.
     let titleSort: String?
@@ -74,6 +76,20 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
     var posterPath: String? { kind == .episode ? (grandparentThumb ?? thumb) : thumb }
     var backdropPath: String? { kind == .episode ? (grandparentArt ?? art) : art }
 
+    /// What kind of extra a clip is, in words: "Behind the Scenes", "Deleted Scene"…
+    var extraLabel: String {
+        switch subtype {
+        case "trailer": "Trailer"
+        case "featurette": "Featurette"
+        case "behindTheScenes": "Behind the Scenes"
+        case "deletedScene": "Deleted Scene"
+        case "interview": "Interview"
+        case "sceneOrSample", "scene": "Scene"
+        case "short": "Short"
+        default: "Extra"
+        }
+    }
+
     var filePath: String? { media.first?.parts.first?.file }
 
     var releaseDate: Date? {
@@ -81,7 +97,7 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case ratingKey, type, title, titleSort, year, summary, tagline, contentRating, audienceRating, duration
+        case ratingKey, type, subtype, title, titleSort, year, summary, tagline, contentRating, audienceRating, duration
         case addedAt, originallyAvailableAt, thumb, art, librarySectionID
         case grandparentTitle, grandparentThumb, grandparentArt, parentIndex, index
         case reason, reasonTitle, playlistItemID
@@ -96,6 +112,7 @@ nonisolated struct PlexItem: Decodable, Sendable, Hashable, Identifiable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         ratingKey = try c.decode(String.self, forKey: .ratingKey)
         type = try c.decode(String.self, forKey: .type)
+        subtype = try c.decodeIfPresent(String.self, forKey: .subtype)
         title = try c.decodeIfPresent(String.self, forKey: .title) ?? ""
         titleSort = try c.decodeIfPresent(String.self, forKey: .titleSort)
         year = try c.decodeIfPresent(Int.self, forKey: .year)

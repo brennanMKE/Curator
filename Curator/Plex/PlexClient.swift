@@ -63,6 +63,11 @@ nonisolated struct PlexClient: Sendable {
         return try await get("/library/metadata/\(ratingKey)", as: PlexItemList.self, query: query).items.first
     }
 
+    /// An item's extras: trailers, featurettes, deleted scenes and other bonus features.
+    func extras(ratingKey: String) async throws -> [PlexItem] {
+        try await get("/library/metadata/\(ratingKey)/extras", as: PlexItemList.self).items
+    }
+
     /// What every player is streaming right now.
     func sessions() async throws -> [PlexSession] {
         try await get("/status/sessions", as: PlexSessionList.self).sessions

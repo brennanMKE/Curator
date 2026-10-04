@@ -36,6 +36,19 @@ struct PlexItemTests {
         #expect(movie.posterPath == "/library/metadata/448/thumb/1790140674")
     }
 
+    @Test func decodesExtras() throws {
+        let json = """
+            {"MediaContainer":{"size":2,"Metadata":[
+              {"ratingKey":"901","type":"clip","subtype":"behindTheScenes","extraType":5,"title":"Making McCall","duration":612000},
+              {"ratingKey":"902","type":"clip","title":"Untitled"}
+            ]}}
+            """
+        let extras = try JSONDecoder().decode(PlexEnvelope<PlexItemList>.self, from: Data(json.utf8)).mediaContainer.items
+        #expect(extras.map(\.extraLabel) == ["Behind the Scenes", "Extra"])
+        #expect(extras.first?.subtype == "behindTheScenes")
+        #expect(extras.first?.duration == 612000)
+    }
+
     @Test func decodesEmptyListing() throws {
         let json = #"{"MediaContainer":{"size":0,"totalSize":0}}"#
         let list = try JSONDecoder().decode(PlexEnvelope<PlexItemList>.self, from: Data(json.utf8)).mediaContainer
