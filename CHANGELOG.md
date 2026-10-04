@@ -3,6 +3,15 @@
 Release notes for each version. `scripts/publish-release.sh` uses the section for the version
 being released.
 
+## 0.1.4
+
+See a title's bonus features.
+
+- **Extras:** the inspector lists a title's trailers, featurettes, behind-the-scenes and
+  deleted scenes, with each one's kind and runtime. While a title is selected the list
+  refreshes every minute, so bonus features you import after the movie appear as Plex picks
+  them up.
+
 ## 0.1.3
 
 See what's playing, and Delete works in playlists again.
